@@ -8,6 +8,7 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import Toast from 'react-native-toast-message';
 
 // This is the default configuration
 configureReanimatedLogger({
@@ -38,14 +39,16 @@ const [fontsLoaded, fontError] = useFonts({
     return null;
   }
   return (
-    <>
+    <Stripe>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(consumer)" />
+        <Stack.Screen name="(client)" />
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="light" />
-    </>
+      <Toast />
+      <StatusBar style="dark" />
+    </Stripe>
   );
 }

@@ -1,18 +1,18 @@
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { colors, fonts, layout, spacing } from '@/constants';
-import { useAuthStore } from '@/stores/authStore';
-import { useCaseStore } from '@/stores/caseStore';
+import { useAuthStore } from '@/services/authStore';
+import { useCaseStore } from '@/services/caseStore';
 import { ChartBar as BarChart3, Bell, Briefcase, Clock, FileText, Plus, ShieldCheck, TrendingUp, Users, Wand as Wand2 } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

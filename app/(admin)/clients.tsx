@@ -1,3 +1,4 @@
+import { TabHeader } from '@/components/ui/Headers';
 import { colors, fonts, layout, spacing } from '@/constants';
 import { Mail, MapPin, Phone, Plus, Search } from 'lucide-react-native';
 import React from 'react';
@@ -92,17 +93,14 @@ export default function ClientsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Clients</Text>
-        <View style={styles.headerActions}>
+      <TabHeader title='Clients' onRight={ <View style={styles.headerActions}>
           <TouchableOpacity style={styles.searchButton}>
             <Search size={24} color={colors.text.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.addButton}>
             <Plus size={24} color={colors.text.white} />
           </TouchableOpacity>
-        </View>
-      </View>
+        </View>}/>
 
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
@@ -131,21 +129,7 @@ export default function ClientsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.lg,
     backgroundColor: colors.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-  },
-  headerTitle: {
-    fontSize: fonts.sizes['2xl'],
-    fontWeight: fonts.weights.bold,
-    color: colors.text.primary,
   },
   headerActions: {
     flexDirection: 'row',
@@ -193,10 +177,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    marginBottom:30
   },
   clientsList: {
     padding: spacing.lg,
-    gap: spacing.md,
   },
   clientCard: {
     backgroundColor: colors.background.primary,

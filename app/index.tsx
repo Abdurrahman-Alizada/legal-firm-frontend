@@ -1,50 +1,57 @@
-import { fonts } from '@/constants';
-import { Ionicons, Octicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import React from 'react';
+import { fonts } from "@/constants";
+import { useAuthStore } from "@/services/authStore";
+import { Ionicons, Octicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import React, { useEffect } from "react";
 import {
-    Dimensions,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 const LegalPracticeScreen = () => {
+  const { isAuthenticated, loadFromStorage } = useAuthStore();
+
+  useEffect(() => {
+    loadFromStorage().then((res) => {
+      if (res) {
+        if (res === "admin") {
+          router.replace("/(admin)");
+        } else if (res === "client") {
+          router.replace("/(client)");
+        }
+      }
+    });
+  }, []);
+
   const handleStartFreeTrial = () => {
-    router.push('/(auth)/login');
+    router.replace("/(auth)");
   };
 
   const handleAdminDemo = () => {
-    router.push('/(screens)/dashboard');
+    router.replace("/(admin)");
   };
 
   const handleClientDemo = () => {
-    router.push('/(screens)/subscriptions');
+    router.replace("/(client)");
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header
-        <View style={styles.header}>
-          <Text style={styles.logo}>LOGO</Text>
-        </View> */}
-
         {/* Main Content */}
         <LinearGradient
-          colors={['#e3f2fd', '#bbdefb', '#90caf9']}
+          colors={["#e3f2fd", "#bbdefb", "#90caf9"]}
           style={styles.mainContent}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -54,42 +61,60 @@ const LegalPracticeScreen = () => {
             <Text style={styles.mainTitle}>
               Revolutionize your legal practice
             </Text>
-            
+
             <Text style={styles.subtitle}>
-              with AI-powered case management, secure client communications, and intelligent research assistance.
+              with AI-powered case management, secure client communications, and
+              intelligent research assistance.
             </Text>
 
             <Text style={styles.description}>
-              Experience the future of legal technology with comprehensive case management, AI-powered document analysis, and secure client communications.
+              Experience the future of legal technology with comprehensive case
+              management, AI-powered document analysis, and secure client
+              communications.
             </Text>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.buttonSection}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.button, styles.primaryButton]}
               onPress={handleStartFreeTrial}
               activeOpacity={0.8}
             >
-              <Octicons name="law" size={20} color="white" style={styles.buttonIcon} />
+              <Octicons
+                name="law"
+                size={20}
+                color="white"
+                style={styles.buttonIcon}
+              />
               <Text style={styles.primaryButtonText}>Start Free Trial</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.button, styles.secondaryButton]}
               onPress={handleAdminDemo}
               activeOpacity={0.8}
             >
-              <Ionicons name="settings" size={20} color="white" style={styles.buttonIcon} />
+              <Ionicons
+                name="settings"
+                size={20}
+                color="white"
+                style={styles.buttonIcon}
+              />
               <Text style={styles.secondaryButtonText}>Admin Demo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.button, styles.secondaryButton]}
               onPress={handleClientDemo}
               activeOpacity={0.8}
             >
-              <Ionicons name="person" size={20} color="white" style={styles.buttonIcon} />
+              <Ionicons
+                name="person"
+                size={20}
+                color="white"
+                style={styles.buttonIcon}
+              />
               <Text style={styles.secondaryButtonText}>Client Demo</Text>
             </TouchableOpacity>
           </View>
@@ -103,7 +128,8 @@ const LegalPracticeScreen = () => {
               </View>
               <Text style={styles.featureTitle}>AI-Powered Research</Text>
               <Text style={styles.featureDescription}>
-                Get instant legal insights, case law suggestions, and statutory analysis with JuliaMD AI.
+                Get instant legal insights, case law suggestions, and statutory
+                analysis with JuliaMD AI.
               </Text>
             </View>
 
@@ -114,7 +140,8 @@ const LegalPracticeScreen = () => {
               </View>
               <Text style={styles.featureTitle}>Secure Communications</Text>
               <Text style={styles.featureDescription}>
-                End-to-end encrypted messaging and file sharing that meets legal industry standards.
+                End-to-end encrypted messaging and file sharing that meets legal
+                industry standards.
               </Text>
             </View>
 
@@ -125,7 +152,8 @@ const LegalPracticeScreen = () => {
               </View>
               <Text style={styles.featureTitle}>Smart Analytics</Text>
               <Text style={styles.featureDescription}>
-                Real-time insights into case progress, billing, and firm performance metrics.
+                Real-time insights into case progress, billing, and firm
+                performance metrics.
               </Text>
             </View>
           </View>
@@ -138,7 +166,7 @@ const LegalPracticeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   scrollView: {
     flex: 1,
@@ -150,17 +178,17 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   logo: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     letterSpacing: 0.5,
   },
   mainContent: {
     flex: 1,
-    paddingTop:60,
+    paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -169,21 +197,21 @@ const styles = StyleSheet.create({
   },
   mainTitle: {
     fontSize: width > 400 ? 34 : 28,
-    fontFamily:fonts.family.bold,
-    color: '#1976d2',
+    fontFamily: fonts.family.bold,
+    color: "#1976d2",
     lineHeight: width > 400 ? 40 : 36,
     marginBottom: 16,
   },
   subtitle: {
     fontSize: width > 400 ? 18 : 16,
-    fontWeight: '400',
-    color: '#333',
+    fontWeight: "400",
+    color: "#333",
     lineHeight: width > 400 ? 26 : 24,
     marginBottom: 20,
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
     opacity: 0.8,
   },
@@ -192,14 +220,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -208,35 +236,35 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   primaryButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: "#1976d2",
   },
   secondaryButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: "#1976d2",
   },
   buttonIcon: {
     marginRight: 8,
   },
   primaryButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   secondaryButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   featuresSection: {
     gap: 16,
   },
   featureCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
-    textAlign: 'center',
+    alignItems: "center",
+    textAlign: "center",
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -247,24 +275,24 @@ const styles = StyleSheet.create({
   featureIconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
   },
   featureTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   featureDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

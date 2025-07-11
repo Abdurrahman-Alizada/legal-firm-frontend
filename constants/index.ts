@@ -1,3 +1,5 @@
+import { responsiveHeight as hp, responsiveWidth as wp } from 'react-native-responsive-dimensions';
+
 export const colors = {
   primary: '#2563EB',
   primaryDark: '#1D4ED8',
@@ -15,7 +17,7 @@ export const colors = {
   },
   background: {
     primary: '#FFFFFF',
-    secondary: '#F9FAFB',
+    secondary: '#F3F4F8',
     dark: '#111827',
     card: '#FFFFFF'
   },
@@ -28,14 +30,14 @@ export const colors = {
 
 export const fonts = {
   sizes: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    '2xl': 24,
-    '3xl': 30,
-    '4xl': 36
+    xs: hp(1.2),
+    sm: hp(1.5),
+    base: hp(2),
+    lg: hp(2.2),
+    xl: hp(2.5),
+    '2xl': hp(3),
+    '3xl': hp(3.5),
+    '4xl': hp(4)
   },
   weights: {
     normal: '400' as const,
@@ -52,13 +54,13 @@ export const fonts = {
 } as const;
 
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  '2xl': 40,
-  '3xl': 48
+  xs: wp(1),
+  sm: wp(2),
+  md: wp(4),
+  lg: wp(6),
+  xl: wp(8),
+  '2xl': wp(10),
+  '3xl': wp(12)
 } as const;
 
 export const layout = {

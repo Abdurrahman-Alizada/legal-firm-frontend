@@ -1,9 +1,9 @@
+import { TabHeader } from '@/components/ui/Headers';
 import { colors, fonts, layout, spacing } from '@/constants';
-import { useAuthStore } from '@/stores/authStore';
-import { Bell, ChevronRight, CreditCard as Edit, CircleHelp as HelpCircle, LogOut, Mail, MapPin, Phone, Settings, Shield, User } from 'lucide-react-native';
+import { useAuthStore } from '@/services/authStore';
+import { Bell, ChevronRight, CreditCard as Edit, CircleHelp as HelpCircle, LogOut, Mail, User } from 'lucide-react-native';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
@@ -15,17 +15,17 @@ export default function ProfileScreen() {
       title: 'Account',
       items: [
         { id: 'personal-info', label: 'Personal Information', icon: User, action: 'navigate' },
-        { id: 'security', label: 'Security & Privacy', icon: Shield, action: 'navigate' },
+        // { id: 'security', label: 'Security & Privacy', icon: Shield, action: 'navigate' },
         { id: 'notifications', label: 'Notifications', icon: Bell, action: 'toggle', value: notificationsEnabled, onToggle: setNotificationsEnabled },
       ]
     },
-    {
-      title: 'App Settings',
-      items: [
-        { id: 'general', label: 'General Settings', icon: Settings, action: 'navigate' },
-        { id: 'biometrics', label: 'Biometric Authentication', icon: Shield, action: 'toggle', value: biometricsEnabled, onToggle: setBiometricsEnabled },
-      ]
-    },
+    // {
+    //   title: 'App Settings',
+    //   items: [
+    //     // { id: 'general', label: 'General Settings', icon: Settings, action: 'navigate' },
+    //     // { id: 'biometrics', label: 'Biometric Authentication', icon: Shield, action: 'toggle', value: biometricsEnabled, onToggle: setBiometricsEnabled },
+    //   ]
+    // },
     {
       title: 'Support',
       items: [
@@ -77,27 +77,22 @@ export default function ProfileScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.editButton}>
+    <View style={styles.container}>
+      <TabHeader title='Profile' onRight={<TouchableOpacity style={styles.editButton}>
           <Edit size={24} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+        </TouchableOpacity>}/>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* User Profile Card */}
         <View style={styles.profileCard}>
           <Image 
-            source={{ 
-              uri: user?.avatar || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150' 
-            }}
+            source={require('@/assets/images/lawyer.png')}
             style={styles.profileAvatar}
           />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.name || 'User Name'}</Text>
             <Text style={styles.profileRole}>
-              {(user && user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) )|| 'Lawyer'}
+              {(user && user?.role?.name.charAt(0).toUpperCase() + user?.role.name.slice(1) )}
             </Text>
           </View>
         </View>
@@ -111,22 +106,6 @@ export default function ProfileScreen() {
             <View style={styles.contactInfo}>
               <Text style={styles.contactLabel}>Email</Text>
               <Text style={styles.contactValue}>{user?.email || 'user@example.com'}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.contactItem}>
-            <Phone size={20} color={colors.text.secondary} />
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactLabel}>Phone</Text>
-              <Text style={styles.contactValue}>+1 (555) 123-4567</Text>
-            </View>
-          </View>
-          
-          <View style={styles.contactItem}>
-            <MapPin size={20} color={colors.text.secondary} />
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactLabel}>Location</Text>
-              <Text style={styles.contactValue}>San Francisco, CA</Text>
             </View>
           </View>
         </View>
@@ -148,11 +127,11 @@ export default function ProfileScreen() {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>FirmLink AI</Text>
+          <Text style={styles.appInfoText}>Legal Firm</Text>
           <Text style={styles.appInfoText}>Version 1.0.0</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -160,20 +139,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.secondary,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-  },
-  headerTitle: {
-    fontSize: fonts.sizes['2xl'],
-    fontWeight: fonts.weights.bold,
-    color: colors.text.primary,
   },
   editButton: {
     padding: spacing.sm,
@@ -218,7 +183,7 @@ const styles = StyleSheet.create({
     fontSize: fonts.sizes.lg,
     fontWeight: fonts.weights.semibold,
     color: colors.text.primary,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   contactItem: {
     flexDirection: 'row',
@@ -253,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   destructiveItem: {
     backgroundColor: colors.error + '05',
@@ -293,8 +258,8 @@ const styles = StyleSheet.create({
   },
   appInfo: {
     alignItems: 'center',
-    padding: spacing.xl,
     gap: spacing.xs,
+    marginBottom:60
   },
   appInfoText: {
     fontSize: fonts.sizes.sm,

@@ -1,8 +1,7 @@
-import { HapticTab } from '@/components/HapticTab';
-import BlurTabBarBackground from '@/components/TabBarBackground.ios';
+import { HapticTab } from '@/components/ui/HapticTab';
 import { colors } from '@/constants';
 import { Tabs } from 'expo-router';
-import { Briefcase, FileText, Home, User, Users } from 'lucide-react-native';
+import { Briefcase, FileText, Home, MessageCircle, User, Users } from 'lucide-react-native';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
@@ -12,21 +11,10 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: BlurTabBarBackground,
-        //@ts-ignore
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {
-            backgroundColor: colors.background,
-            borderTopWidth: 0,
-          },
-        }),
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
-          marginTop: 4,
+          marginTop: Platform.OS=="ios"?4:0
         },
       }}
     >
@@ -45,6 +33,15 @@ export default function TabLayout() {
           title: 'Cases',
           tabBarIcon: ({ size, color }) => (
             <Briefcase size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          title: 'Chats',
+          tabBarIcon: ({ size, color }) => (
+            <MessageCircle size={size} color={color} />
           ),
         }}
       />
@@ -73,7 +70,6 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          href:null,
           tabBarIcon: ({ size, color }) => (
             <User size={size} color={color} />
           ),
@@ -82,3 +78,4 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+

@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "LegalFirm",
-    "slug": "LegalFirm",
+    "slug": "legalfirm",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon.jpg",
     "scheme": "legalfirm",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -28,10 +28,17 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/adaptive-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+
+        "@stripe/stripe-react-native",
+        {
+          "enableGooglePay": true
         }
       ]
     ],
