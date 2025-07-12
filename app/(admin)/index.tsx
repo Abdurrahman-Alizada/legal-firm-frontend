@@ -17,6 +17,8 @@ const LegalDashboard = () => {
   const [selectedPlan, setSelectedPlan] = useState('Free Plan');
   const {user,token,isAuthenticated}=useAuthStore()
 
+  
+
   const handleDocumentPress = (docType:any) => {
     Alert.alert('Document Selected', `You selected: ${docType}`);
   };

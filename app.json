@@ -35,10 +35,10 @@
         }
       ],
       [
-
         "@stripe/stripe-react-native",
         {
-          "enableGooglePay": true
+          "merchantIdentifier": "merchant.com.your.app",
+          "enableGooglePay": false
         }
       ]
     ],

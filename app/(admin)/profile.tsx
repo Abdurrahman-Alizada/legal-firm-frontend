@@ -1,6 +1,7 @@
 import { TabHeader } from '@/components/ui/Headers';
 import { colors, fonts, layout, spacing } from '@/constants';
 import { useAuthStore } from '@/services/authStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bell, ChevronRight, CreditCard as Edit, CircleHelp as HelpCircle, LogOut, Mail, User } from 'lucide-react-native';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
 
   const handleItemPress = (item: any) => {
     if (item.action === 'logout') {
+      AsyncStorage.clear()
       logout();
     }
     // Handle other navigation items here
