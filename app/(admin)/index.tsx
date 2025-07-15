@@ -3,7 +3,7 @@ import { colors } from '@/constants';
 import { useAuthStore } from '@/services/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Alert,
   ScrollView,
@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 
 const LegalDashboard = () => {
-  const [selectedPlan, setSelectedPlan] = useState('Free Plan');
-  const {user,token,isAuthenticated}=useAuthStore()
+  const {user,token,currentPlan,fetchCurrentPlan,isAuthenticated}=useAuthStore()
 
-  
+  useEffect(() => {
+    fetchCurrentPlan()
+  }, [])
 
   const handleDocumentPress = (docType:any) => {
     Alert.alert('Document Selected', `You selected: ${docType}`);
@@ -63,7 +64,11 @@ const LegalDashboard = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
 
         {/* Plan Section */}
+        {currentPlan?
         <View style={styles.planSection}>
+          <Text style={styles.planBadge} onPress={()=>router.push('/(screens)/subscriptions')}>Subscribed plan: {currentPlan?.stripeProduct?.name}</Text>
+        </View>
+        :<View style={styles.planSection}>
           <Text style={styles.planBadge}>4 remaining docs</Text>
           <Text style={styles.planTitle}>Free Plan</Text>
           <Text style={styles.planSubtitle}>30 document generation per month</Text>
@@ -92,12 +97,12 @@ const LegalDashboard = () => {
           <TouchableOpacity style={styles.upgradeButton} onPress={()=>router.push('/(screens)/subscriptions')}>
             <Text style={styles.upgradeButtonText}>Upgrade</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.actionItem} >
+            <TouchableOpacity style={styles.actionItem} onPress={()=>router.push('/cases')}>
               <Ionicons name="document-text" size={24} color="#4A90E2" />
               <Text style={styles.actionText}>New Case</Text>
             </TouchableOpacity>
@@ -106,7 +111,7 @@ const LegalDashboard = () => {
               <Text style={styles.actionText}>Client Manager</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.actionRow}>
+          {/* <View style={styles.actionRow}>
             <TouchableOpacity style={styles.actionItem}>
               <Ionicons name="calendar" size={24} color="#4A90E2" />
               <Text style={styles.actionText}>Schedule</Text>
@@ -115,13 +120,13 @@ const LegalDashboard = () => {
               <Ionicons name="folder" size={24} color="#4A90E2" />
               <Text style={styles.actionText}>Document Storage</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
 
         {/* Case Management */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Case Management</Text>
-          <TouchableOpacity style={styles.sectionButton}onPress={()=>router.push('/(screens)/dashboard')}>
+          <TouchableOpacity style={styles.sectionButton}onPress={()=>router.push('/cases')}>
             <Text style={styles.sectionButtonText}>View All Cases</Text>
           </TouchableOpacity>
         </View>
@@ -246,7 +251,7 @@ const LegalDashboard = () => {
         {/* Legal Assistant */}
         <View style={styles.assistantSection}>
           <Text style={styles.assistantTitle}>AI Legal Assistant</Text>
-          <TouchableOpacity style={styles.assistantButton}>
+          <TouchableOpacity style={styles.assistantButton} onPress={()=>router.push('/(julia)/')}>
             <Text style={styles.assistantButtonText}>Ask Legal Question</Text>
           </TouchableOpacity>
         </View>

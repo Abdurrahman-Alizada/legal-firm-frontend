@@ -1,6 +1,7 @@
 import Button from "@/components/ui/Button";
 import DropdownInput from "@/components/ui/Dropdown";
 import { ScreenHeader } from "@/components/ui/Headers";
+import CustomInput from "@/components/ui/Input";
 import { colors, fonts, layout, spacing } from "@/constants";
 import { authService } from "@/services/api/authService";
 import { useAuthStore } from "@/services/authStore";
@@ -28,7 +29,7 @@ export default function FirmLinkAuthScreen() {
     email: "",
     password: "",
     phone: "",
-    roleId:""
+    roleId: "",
   });
 
   // State for auth mode
@@ -37,6 +38,7 @@ export default function FirmLinkAuthScreen() {
   );
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
+  const [obsecurePass, setObsecurePass] = useState(false);
 
   const handleInputChange = (field: any, value: any) => {
     setFormData((prev) => ({
@@ -158,32 +160,24 @@ export default function FirmLinkAuthScreen() {
               {error}
             </Text>
           )}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Email"
-              value={loginData.email}
-              onChangeText={(text) =>
-                setLoginData({ ...loginData, email: text })
-              }
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Password"
-              value={loginData.password}
-              autoCapitalize="none"
-              onChangeText={(text) =>
-                setLoginData({ ...loginData, password: text })
-              }
-              secureTextEntry
-            />
-          </View>
+          <CustomInput
+            label="Email"
+            placeholder="Email"
+            value={loginData.email}
+            onChangeText={(text)=>setLoginData({...loginData,email:text})}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <CustomInput
+            label="Password"
+            placeholder="Password"
+            value={loginData.password}
+            onChangeText={(text)=>setLoginData({...loginData,password:text})}
+            secureTextToggle
+            autoCapitalize="none"
+              autoComplete="password-new"
+          />
           <TouchableOpacity
             style={{ alignSelf: "flex-end", marginTop: spacing.xs }}
             onPress={() => setAuthMode("reset")}
@@ -251,54 +245,48 @@ export default function FirmLinkAuthScreen() {
         return (
           <View style={styles.formContainer}>
             <DropdownInput
-            label="Role"
-              data={[{label:adminRole.name,value:adminRole._id},{label:clientRole.name,value:clientRole._id}]}
-              onSelect={(text)=>handleInputChange("roleId",text.value)}
+              label="Role"
+              data={[
+                { label: adminRole.name, value: adminRole._id },
+                { label: clientRole.name, value: clientRole._id },
+              ]}
+              onSelect={(text) => handleInputChange("roleId", text.value)}
               value={formData.roleId}
-              containerStyle={{margin:0}}
+              containerStyle={{ margin: 0 }}
             />
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Full Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Name"
-                value={formData.name}
-                onChangeText={(text) => handleInputChange("name", text)}
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Phone Number</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Number"
-                value={formData.phone}
-                onChangeText={(text) => handleInputChange("phone", text)}
-                keyboardType="phone-pad"
-              />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email Address</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Email"
-                value={formData.email}
-                onChangeText={(text) => handleInputChange("email", text)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+            <CustomInput
+              label="Full Name"
+              placeholder="Name"
+              value={formData.name}
+              onChangeText={(text) => handleInputChange("name", text)}
+              keyboardType="email-address"
+              autoCapitalize="words"
+            />
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <TextInput
-                style={styles.textInput}
-                secureTextEntry
-                placeholder="Password"
-                autoCapitalize="none"
-                value={formData.password}
-                onChangeText={(text) => handleInputChange("password", text)}
-              />
-            </View>
+            <CustomInput
+              label="Phone Number"
+              placeholder="Number"
+              value={formData.phone}
+              onChangeText={(text) => handleInputChange("phone", text)}
+            />
+            <CustomInput
+              label="Email"
+              placeholder="Email"
+              value={formData.email}
+              onChangeText={(text) => handleInputChange("email", text)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <CustomInput
+              label="Password"
+              placeholder="Password"
+              autoCapitalize="none"
+              autoComplete="password-new"
+              value={formData.password}
+              onChangeText={(text) => handleInputChange("password", text)}
+              secureTextToggle
+            />
           </View>
         );
       case 2:

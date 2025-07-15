@@ -25,7 +25,7 @@ export const chatService = {
  
   async getChatThreads(): Promise<ChatThread[]> {
     try {
-      const {data} =await api.get(`/chat/cases`);
+      const {data} =await api.get(`/chat-thread`);
       return data.data.map((item: any) => ({
       _id: item._id,
       caseId: item.caseId,

@@ -4,7 +4,7 @@ import { api } from "./apiIntercepters";
 export const caseService = {
   async getAllCases() {
     try {
-      const response = await api.get(`/cases`);
+      const response = await api.get(`/case`);
       if (response.status !== 200) {
         const errorData = response.data;
         throw new Error(errorData.message || 'Failed to get cases');
@@ -18,11 +18,7 @@ export const caseService = {
 
   async getCaseById(id: string) {
     try {
-      const response = await api.get(`/cases/${id}`);
-      if (response.status !== 200) {
-        const errorData = response.data;
-        throw new Error(errorData.message || 'Failed to get case');
-      }
+      const response = await api.get(`/case/${id}`);
       return response.data;
     } catch (err) {
       console.log(err);
@@ -32,11 +28,7 @@ export const caseService = {
 
   async createCase(caseData: Omit<Case, '_id' | 'createdAt' | 'updatedAt'>) {
     try {
-      const response = await api.post(`/cases`, caseData);
-      if (response.status !== 201) {
-        const errorData = response.data;
-        throw new Error(errorData.message || 'Failed to create case');
-      }
+      const response = await api.post(`/case`, caseData);
       return response.data;
     } catch (err) {
       console.log(err);
@@ -46,7 +38,7 @@ export const caseService = {
 
   async updateCase(id: string, updates: Partial<Case>) {
     try {
-      const response = await api.patch(`/cases/${id}`, updates);
+      const response = await api.patch(`/case/${id}`, updates);
       if (response.status !== 200) {
         const errorData = response.data;
         throw new Error(errorData.message || 'Failed to update case');
@@ -60,7 +52,7 @@ export const caseService = {
 
   async deleteCase(id: string) {
     try {
-      const response = await api.delete(`/cases/${id}`);
+      const response = await api.delete(`/case/${id}`);
       if (response.status !== 200) {
         const errorData = response.data;
         throw new Error(errorData.message || 'Failed to delete case');
@@ -72,23 +64,14 @@ export const caseService = {
     }
   },
 
-  async uploadDocument(id: string, documentData: any) {
+  async uploadDocument(id: string, formData: any) {
     try {
-      const formData = new FormData();
-      for (const key in documentData) {
-        formData.append(key, documentData[key]);
-      }
-      const response = await api.post(`/cases/${id}/documents`, formData, {
+      const response = await api.post(`/case/${id}/documents`,formData , {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (response.status !== 201) {
-        const errorData = response.data;
-        throw new Error(errorData.message || 'Failed to upload document');
-      }
       return response.data;
     } catch (err) {
-      console.log(err);
-      throw err;
+      console.error(err);
     }
   },
 };

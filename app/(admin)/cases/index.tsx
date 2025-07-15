@@ -41,8 +41,9 @@ export default function CasesScreen() {
   }, []);
 
   const filteredCases = cases.filter((case_) => {
-    const matchesSearch =
-      case_.title.toLowerCase().includes(searchQuery.toLowerCase()) 
+    const matchesSearch = case_.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesFilter =
       filterStatus === "all" || case_.status === filterStatus;
 
@@ -142,12 +143,17 @@ export default function CasesScreen() {
       </ScrollView>
 
       {/* Create/Edit Case Modal */}
-      <AddCaseModal
-        visible={showAddModal}
-        onClose={() => {setShowAddModal(false);setSelectedCaseForEdit(null)}}
-        selectedCase={selectedCaseForEdit}
-        setSelectedCase={setSelectedCaseForEdit}
-      />
+      <View style={{ flex: 1 }}>
+        <AddCaseModal
+          visible={showAddModal}
+          onClose={() => {
+            setShowAddModal(false);
+            setSelectedCaseForEdit(null);
+          }}
+          selectedCase={selectedCaseForEdit}
+          setSelectedCase={setSelectedCaseForEdit}
+        />
+      </View>
     </View>
   );
 }

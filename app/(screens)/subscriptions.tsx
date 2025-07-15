@@ -1,17 +1,17 @@
 import Spinner from "@/components/common/Spinner";
+import { ScreenHeader } from "@/components/ui/Headers";
 import { initiateCheckout } from "@/services/api/billingService";
+import { useAuthStore } from "@/services/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import {
   CardField,
   useConfirmPayment
 } from "@stripe/stripe-react-native";
-import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -115,6 +115,7 @@ type pricingCardProps = {
   buttonText: string;
   buttonColor: string;
   onPress: () => void;
+  isSubscribed:boolean;
   features: string[];
   isPopular?: boolean;
   textColor?: string;
@@ -126,10 +127,7 @@ const PricingScreen = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-
-  const handleBackPress = () => {
-    router.back();
-  };
+  const {currentPlan}=useAuthStore()
 
   const FeatureItem = ({
     text,
@@ -158,6 +156,7 @@ const PricingScreen = () => {
     subtitle,
     price,
     period,
+    isSubscribed,
     buttonText,
     buttonColor,
     onPress,
@@ -184,9 +183,9 @@ const PricingScreen = () => {
         style={[styles.planButton, { backgroundColor: buttonColor }]}
         onPress={onPress}
         activeOpacity={0.8}
-        disabled={loading}
+        disabled={loading || isSubscribed}
       >
-          <Text style={styles.planButtonText}>{buttonText}</Text>
+          <Text style={styles.planButtonText}>{isSubscribed?"Currently Subscribed":buttonText}</Text>
       </TouchableOpacity>
 
       <View style={styles.featuresContainer}>
@@ -198,21 +197,6 @@ const PricingScreen = () => {
   );
 
   const handleUpgrade = async (priceId: string | undefined, plan: any) => {
-    // Handle free plan
-    if (plan.title === "Free Plan") {
-      Alert.alert(
-        "Free Plan Selected",
-        "You're now on the free plan. Enjoy your basic features!",
-        [
-          {
-            text: "OK",
-            onPress: () => router.push("/(screens)/dashboard")
-          }
-        ]
-      );
-      return;
-    }
-
     if (!priceId) {
       Alert.alert("Error", "Invalid plan selected");
       return;
@@ -341,15 +325,8 @@ const PricingScreen = () => {
   };
 
   return (
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pricing</Text>
-          <View style={styles.headerRight} />
-        </View>
+      <View style={styles.container}>
+       <ScreenHeader title="pricing"/>
 
         <ScrollView
           style={styles.scrollView}
@@ -381,6 +358,7 @@ const PricingScreen = () => {
                 subtitle={plan.subtitle}
                 price={plan.price}
                 period={plan.period}
+                isSubscribed={currentPlan?.stripePlanId==plan.priceId}
                 buttonText={plan.buttonText}
                 buttonColor={plan.buttonColor}
                 textColor={plan.textColor}
@@ -430,7 +408,7 @@ const PricingScreen = () => {
         {paymentLoading && clientSecret && (
           <PaymentModal />
         )}
-      </SafeAreaView>
+      </View>
   );
 };
 
@@ -654,7 +632,7 @@ const styles = StyleSheet.create({
     height: 50,
     fontSize: 16,
     //@ts-ignore
-    textColor:"#000"
+    // textColor:"#000"
   },
   payButton: {
     padding: 12,

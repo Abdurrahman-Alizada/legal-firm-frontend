@@ -54,6 +54,7 @@ export default function RootLayout() {
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="(client)" />
         <Stack.Screen name="(screens)" />
+        <Stack.Screen name="(julia)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <Toast />

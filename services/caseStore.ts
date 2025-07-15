@@ -18,7 +18,7 @@ export interface Case {
 
 interface CaseState {
   cases: Case[];
-  selectedCase: Case | null;
+  selectedCase: any;
   isLoading: boolean;
 }
 
@@ -70,7 +70,7 @@ export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
   createCase: async (caseData) => {
     set({ isLoading: true });
     try {
-      const {data}= await caseService.createCase(caseData);
+      const {data}= await caseService.createCase({...caseData,clientId:"6876434d5fa9464f538655f5"});
       set(state => ({
         cases: [data, ...state.cases],
         isLoading: false

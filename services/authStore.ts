@@ -2,8 +2,10 @@ import { adminRole, LoginCredentials, Role, SignUpCredentials } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Alert } from "react-native";
+import Toast from "react-native-toast-message";
 import { create } from "zustand";
 import { authService } from "./api/authService";
+import { getCurrentPlan } from "./api/billingService";
 
 export interface User {
   id: string;
@@ -18,6 +20,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  currentPlan:any;
   isAuthenticated: null | 'admin' | 'client';
 }
 
@@ -29,6 +32,7 @@ interface AuthActions {
     name,
     roleId,
   }: SignUpCredentials) => Promise<void>;
+  fetchCurrentPlan: () => void;
   logout: () => void;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
@@ -38,6 +42,7 @@ interface AuthActions {
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   user: null,
   token: null,
+  currentPlan:null,
   isLoading: false,
   error: null,
   isAuthenticated: null,
@@ -79,6 +84,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         error: error instanceof Error ? error.message : "Register failed",
         isLoading: false,
       });
+    }
+  },
+  fetchCurrentPlan: async () => {
+    try {
+      const {data}=await getCurrentPlan();
+      set({ currentPlan: data });
+    } catch (error:any) {
+      Toast.show({type:"error",text1:error.message})
     }
   },
 
