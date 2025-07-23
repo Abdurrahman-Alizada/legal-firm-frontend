@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: layout.borderRadius.md,
     gap: spacing.sm,
-    ...layout.shadow.sm,
   },
   
   // Variants

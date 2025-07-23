@@ -2,29 +2,92 @@ import { colors, fonts, spacing } from "@/constants";
 import { isIosDevice } from "@/utils/helper";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import { Search, X } from "lucide-react-native";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+  Text, TextInput, TouchableOpacity,
+  View
 } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-const TabHeader = ({ title, onRight }: { title: string; onRight?: any }) => {
+type TabHeaderProps = {
+  title: string;
+  onRight?: React.ReactNode;
+  showSearch?: boolean;
+  onSearchChange?: (text: string) => void;
+};
+
+const TabHeader: React.FC<TabHeaderProps> = ({
+  title,
+  onRight,
+  showSearch = false,
+  onSearchChange,
+}) => {
+  const [searchText, setSearchText] = useState("");
+  const [visible, setVisible] = useState(false);
+
+  const height = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  const toggleSearch = () => {
+    const toValue = visible ? 0 : 1;
+    setVisible(!visible);
+    height.value = withTiming(toValue, { duration: 250 });
+    opacity.value = withTiming(toValue, { duration: 250 });
+
+    if (visible) {
+      setSearchText("");
+      onSearchChange?.("");
+    }
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: height.value * 65,
+    opacity: opacity.value,
+  }));
+
   return (
-    <View style={{paddingTop: isIosDevice ? undefined : StatusBar.currentHeight, backgroundColor: colors.background.primary }}>
+    <View
+      style={{
+        paddingTop: isIosDevice ? undefined : StatusBar.currentHeight,
+        backgroundColor: colors.background.primary,
+      }}
+    >
       <SafeAreaView />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{title}</Text>
-        {onRight && onRight}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {showSearch && (
+            <TouchableOpacity onPress={toggleSearch} style={styles.searchButton}>
+              {visible ?<X size={22} color={colors.text.primary}/>:<Search size={22} color={colors.text.primary}/>}
+            </TouchableOpacity>
+          )}
+          {onRight}
+        </View>
       </View>
+
+      {showSearch && (
+        <Animated.View style={[styles.searchContainer, animatedStyle]}>
+          <SafeAreaView style={styles.searchInputContainer}>
+            <Search size={20} color={colors.text.secondary} style={styles.searchIcon} />
+            <TextInput
+              placeholder="Search documents..."
+              placeholderTextColor={colors.text.secondary}
+              style={styles.searchInput}
+              onChangeText={setSearchText}
+              autoFocus={true}
+            />
+          </SafeAreaView>
+        </Animated.View>
+      )}
     </View>
   );
 };
 
-const ScreenHeader = ({ title, onRight }: { title: string; onRight?: any }) => {
+const ScreenHeader = ({ title, onRight, onBackPress=()=>router.back() }: { title: string; onRight?: any; onBackPress?:()=>void}) => {
   return (
     <View
       style={{
@@ -34,12 +97,12 @@ const ScreenHeader = ({ title, onRight }: { title: string; onRight?: any }) => {
     >
       <SafeAreaView />
       <View style={styles.header}>
-        <TouchableOpacity
+        {onBackPress&&<TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={onBackPress}
         >
           <Ionicons name="chevron-back" size={24} color="#666" />
-        </TouchableOpacity>
+        </TouchableOpacity>}
         <Text style={styles.screenheaderTitle}>{title}</Text>
         {onRight ? onRight : <View style={styles.headerSpacer} />}
       </View>
@@ -74,5 +137,37 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 32,
+  },
+  searchButton: {
+    backgroundColor: colors.background.secondary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.sm,
+  },
+  searchContainer: {
+    overflow: "hidden",
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.background.primary,
+  },
+  searchInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background.secondary,
+    borderRadius: 30,
+    paddingHorizontal: spacing.md,
+    height: 50,
+    marginTop: spacing.sm,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex:1
+  },
+  searchClose: {
+    padding: 4,
   },
 });

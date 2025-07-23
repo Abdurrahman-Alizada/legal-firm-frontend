@@ -1,15 +1,18 @@
 import AddCaseModal from "@/components/modals/AddCaseModal";
 import AddDocumentModal from "@/components/modals/AddDocumentModal";
 import { ScreenHeader } from "@/components/ui/Headers";
+import { CaseDetailSkeleton } from "@/components/ui/Skeletons";
 import { colors, fonts, layout, spacing } from "@/constants";
+import { chatService } from "@/services/api/chatService";
 import { useCaseStore } from "@/services/caseStore";
+import { useChatStore } from "@/services/chatStore";
+import { handleOpenDocument } from "@/utils/helper";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import { Link, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { AtSign, User } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -24,6 +27,7 @@ const CaseDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isLoading, fetchCaseById, selectedCase, uploadDocument } =
     useCaseStore();
+  const { fetchThreads } = useChatStore();
   const [activeTab, setActiveTab] = useState("details");
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -32,27 +36,6 @@ const CaseDetailPage = () => {
   useEffect(() => {
     fetchCaseById(id);
   }, [id]);
-
-  const handleOpenDocument = async (doc: any) => {
-    try {
-      if (doc.type === "pdf") {
-        // For PDFs, we'd typically download and open
-        Alert.alert("Open Document", `Would you like to open ${doc.name}?`, [
-          { text: "Cancel", style: "cancel" },
-          { text: "Open", onPress: () => Linking.openURL(doc.url) },
-        ]);
-      } else if (doc.type === "image") {
-        // For images, we can show a preview
-        Alert.alert("View Image", `Would you like to view ${doc.name}?`, [
-          { text: "Cancel", style: "cancel" },
-          { text: "View", onPress: () => Linking.openURL(doc.url) },
-        ]);
-      }
-    } catch (error) {
-      console.error("Error opening document:", error);
-      Alert.alert("Error", "Could not open the document");
-    }
-  };
 
   const handleCallClient = () => {
     if (selectedCase.client?.phone) {
@@ -107,15 +90,7 @@ const CaseDetailPage = () => {
     return format(new Date(dateString), "MMM d, yyyy 'at' h:mm a");
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (!selectedCase) {
+  if (!selectedCase && !isLoading) {
     return (
       <View style={styles.centered}>
         <MaterialIcons
@@ -131,122 +106,136 @@ const CaseDetailPage = () => {
     );
   }
 
-  // Merge mock documents with actual documents if needed
-  //@ts-ignore
   const documents =
     selectedCase?.documents?.length > 0 ? selectedCase.documents : [];
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={selectedCase.title} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: spacing.xl }}
-      >
-        {/* Header Section */}
-        <View style={styles.headerContainer}>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>
-              {selectedCase.title || "Untitled Case"}
-            </Text>
-            <View style={styles.clientDetails}>
-              <Text style={styles.clientName}>
-                <User size={14} color={colors.text.secondary} />{" "}
-                {selectedCase.client.name || "No client specified"}
+      <ScreenHeader title={selectedCase?.title} />
+      {isLoading ? (
+        <CaseDetailSkeleton />
+      ) : (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={{ paddingBottom: spacing.xl }}
+        >
+          {/* Header Section */}
+          <View style={styles.headerContainer}>
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>
+                {selectedCase.title || "Untitled Case"}
               </Text>
-              <Text style={styles.clientName}>
-                <AtSign size={14} color={colors.text.secondary} />{" "}
-                {selectedCase.client.email || "No client specified"}
-              </Text>
-            </View>
-            <View style={styles.statusRow}>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor: getStatusColor(selectedCase.status) + "20",
-                  },
-                ]}
-              >
-                <Text
+              <View style={styles.clientDetails}>
+                <Text style={styles.clientName}>
+                  <User size={14} color={colors.text.secondary} />{" "}
+                  {selectedCase.client.name || "No client specified"}
+                </Text>
+                <Text style={styles.clientName}>
+                  <AtSign size={14} color={colors.text.secondary} />{" "}
+                  {selectedCase.client.email || "No client specified"}
+                </Text>
+              </View>
+              <View style={styles.statusRow}>
+                <View
                   style={[
-                    styles.statusText,
-                    { color: getStatusColor(selectedCase.status) },
+                    styles.statusBadge,
+                    {
+                      backgroundColor:
+                        getStatusColor(selectedCase.status) + "20",
+                    },
                   ]}
                 >
-                  {selectedCase.status || "Unknown status"}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.priorityBadge,
-                  {
-                    backgroundColor:
-                      getPriorityColor(selectedCase.priority) + "20",
-                  },
-                ]}
-              >
-                <Text
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(selectedCase.status) },
+                    ]}
+                  >
+                    {selectedCase.status || "Unknown status"}
+                  </Text>
+                </View>
+                <View
                   style={[
-                    styles.priorityText,
-                    { color: getPriorityColor(selectedCase.priority) },
+                    styles.priorityBadge,
+                    {
+                      backgroundColor:
+                        getPriorityColor(selectedCase.priority) + "20",
+                    },
                   ]}
                 >
-                  {selectedCase.priority || "Unknown priority"}
-                </Text>
+                  <Text
+                    style={[
+                      styles.priorityText,
+                      { color: getPriorityColor(selectedCase.priority) },
+                    ]}
+                  >
+                    {selectedCase.priority || "Unknown priority"}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.datesRow}>
+                <View style={styles.dateItem}>
+                  <Feather
+                    name="calendar"
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                  <Text style={styles.dateText}>
+                    Created:{" "}
+                    {format(
+                      new Date(selectedCase.createdAt || new Date()),
+                      "MMM d, yyyy"
+                    )}
+                  </Text>
+                </View>
+                <View style={styles.dateItem}>
+                  <Feather
+                    name="refresh-cw"
+                    size={14}
+                    color={colors.text.secondary}
+                  />
+                  <Text style={styles.dateText}>
+                    Updated:{" "}
+                    {format(
+                      new Date(selectedCase.updatedAt || new Date()),
+                      "MMM d, yyyy"
+                    )}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <View style={styles.datesRow}>
-              <View style={styles.dateItem}>
-                <Feather
-                  name="calendar"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.dateText}>
-                  Created:{" "}
-                  {format(
-                    new Date(selectedCase.createdAt || new Date()),
-                    "MMM d, yyyy"
-                  )}
-                </Text>
-              </View>
-              <View style={styles.dateItem}>
-                <Feather
-                  name="refresh-cw"
-                  size={14}
-                  color={colors.text.secondary}
-                />
-                <Text style={styles.dateText}>
-                  Updated:{" "}
-                  {format(
-                    new Date(selectedCase.updatedAt || new Date()),
-                    "MMM d, yyyy"
-                  )}
-                </Text>
-              </View>
-            </View>
-          </View>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleCallClient}
+              >
+                <Feather name="phone" size={20} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Call</Text>
+              </TouchableOpacity>
 
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleCallClient}
-            >
-              <Feather name="phone" size={20} color={colors.primary} />
-              <Text style={styles.actionButtonText}>Call</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleEmailClient}
-            >
-              <Feather name="mail" size={20} color={colors.primary} />
-              <Text style={styles.actionButtonText}>Email</Text>
-            </TouchableOpacity>
-            <Link href={`/chats/${selectedCase._id}`} asChild>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleEmailClient}
+              >
+                <Feather name="mail" size={20} color={colors.primary} />
+                <Text style={styles.actionButtonText}>Email</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={async () => {
+                  await chatService
+                    .createChatThread({
+                      scope: "case",
+                      caseId: selectedCase._id,
+                    })
+                    .then(async (res) => {
+                      await fetchThreads();
+                      router.push(`/chats/${res._id}`);
+                    });
+                }}
+              >
                 <Feather
                   name="message-square"
                   size={20}
@@ -254,298 +243,305 @@ const CaseDetailPage = () => {
                 />
                 <Text style={styles.actionButtonText}>Message</Text>
               </TouchableOpacity>
-            </Link>
+            </View>
           </View>
-        </View>
 
-        {/* Navigation Tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === "details" && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab("details")}
-          >
-            <Text
+          {/* Navigation Tabs */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
               style={[
-                styles.tabText,
-                activeTab === "details" && styles.activeTabText,
+                styles.tabButton,
+                activeTab === "details" && styles.activeTab,
               ]}
+              onPress={() => setActiveTab("details")}
             >
-              Details
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === "documents" && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab("documents")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "documents" && styles.activeTabText,
-              ]}
-            >
-              Documents
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tabButton,
-              activeTab === "timeline" && styles.activeTab,
-            ]}
-            onPress={() => setActiveTab("timeline")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "timeline" && styles.activeTabText,
-              ]}
-            >
-              Timeline
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Details Tab Content */}
-        {activeTab === "details" && (
-          <View style={styles.tabContent}>
-            {/* Description Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Description</Text>
-                <TouchableOpacity
-                  onPress={() => setExpandedDescription(!expandedDescription)}
-                >
-                  <Text style={styles.expandButton}>
-                    {expandedDescription ? "Show Less" : "Show More"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
               <Text
-                style={styles.sectionText}
-                numberOfLines={expandedDescription ? undefined : 3}
+                style={[
+                  styles.tabText,
+                  activeTab === "details" && styles.activeTabText,
+                ]}
               >
-                {selectedCase.description || (
-                  <Text style={styles.placeholder}>
-                    No description provided for this case.
-                  </Text>
-                )}
+                Details
               </Text>
-            </View>
-
-            {/* Case Information Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Case Information</Text>
-              <View style={styles.infoGrid}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Case ID</Text>
-                  <Text style={styles.infoValue}>
-                    {selectedCase._id || "N/A"}
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Client Email</Text>
-                  <Text style={styles.infoValue}>
-                    {selectedCase.client?.email || "N/A"}
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Client Company</Text>
-                  <Text style={styles.infoValue}>
-                    {selectedCase.client?.company?.name || "N/A"}
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Created By</Text>
-                  <Text style={styles.infoValue}>
-                    {selectedCase.createdByUser?.name || "N/A"}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Assignee Section */}
-            {selectedCase.assignedEmployees && selectedCase.assignedEmployees.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Assigned To</Text>
-                <View style={styles.assigneeCard}>
-                  <View style={styles.assigneeAvatar}>
-                    <User size={24} color={colors.text.primary} />
-                  </View>
-                  <View style={styles.assigneeInfo}>
-                    <Text style={styles.assigneeName}>
-                      {selectedCase.assignedEmployees?.name || "Unassigned"}
-                    </Text>
-                    <Text style={styles.assigneeRole}>
-                      {selectedCase.assignedEmployees?.length > 0
-                        ? "Case Manager"
-                        : "Case Creator"}
-                    </Text>
-                    <Text style={styles.assigneeEmail}>
-                      {selectedCase.assignedEmployees?.email || ""}
-                    </Text>
-                  </View>
-                  <TouchableOpacity style={styles.assigneeAction}>
-                    <Feather
-                      name="message-square"
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "documents" && styles.activeTab,
+              ]}
+              onPress={() => setActiveTab("documents")}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "documents" && styles.activeTabText,
+                ]}
+              >
+                Documents
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tabButton,
+                activeTab === "timeline" && styles.activeTab,
+              ]}
+              onPress={() => setActiveTab("timeline")}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "timeline" && styles.activeTabText,
+                ]}
+              >
+                Timeline
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Documents Tab Content */}
-        {activeTab === "documents" && (
-          <View style={styles.tabContent}>
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Documents</Text>
-                <TouchableOpacity
-                  style={styles.uploadButton}
-                  onPress={() => setShowUploadModal(true)}
+          {/* Details Tab Content */}
+          {activeTab === "details" && (
+            <View style={styles.tabContent}>
+              {/* Description Section */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Description</Text>
+                  <TouchableOpacity
+                    onPress={() => setExpandedDescription(!expandedDescription)}
+                  >
+                    <Text style={styles.expandButton}>
+                      {expandedDescription ? "Show Less" : "Show More"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text
+                  style={styles.sectionText}
+                  numberOfLines={expandedDescription ? undefined : 3}
                 >
-                  <Feather name="upload" size={16} color={colors.primary} />
-                  <Text style={styles.uploadButtonText}>Upload</Text>
-                </TouchableOpacity>
+                  {selectedCase.description || (
+                    <Text style={styles.placeholder}>
+                      No description provided for this case.
+                    </Text>
+                  )}
+                </Text>
               </View>
 
-              {selectedCase.documents!.length > 0 ? (
-                selectedCase.documents!.map((doc: any, idx: number) => (
-                  <TouchableOpacity
-                    key={doc._id || idx}
-                    style={styles.documentCard}
-                    onPress={() => handleOpenDocument(doc)}
-                  >
-                    <View style={styles.documentPreview}>
-                      {doc.type === "image" ? (
-                        <Image
-                          source={{ uri: doc.thumbnail || doc.url }}
-                          style={styles.documentImage}
-                          resizeMode="cover"
+              {/* Case Information Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Case Information</Text>
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Case ID</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedCase._id || "N/A"}
+                    </Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Client Email</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedCase.client?.email || "N/A"}
+                    </Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Client Company</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedCase.client?.company?.name || "N/A"}
+                    </Text>
+                  </View>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Created By</Text>
+                    <Text style={styles.infoValue}>
+                      {selectedCase.createdByUser?.name || "N/A"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Assignee Section */}
+              {selectedCase.assignedEmployees &&
+                selectedCase.assignedEmployees.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Assigned To</Text>
+                    <View style={styles.assigneeCard}>
+                      <View style={styles.assigneeAvatar}>
+                        <User size={24} color={colors.text.primary} />
+                      </View>
+                      <View style={styles.assigneeInfo}>
+                        <Text style={styles.assigneeName}>
+                          {selectedCase.assignedEmployees?.name || "Unassigned"}
+                        </Text>
+                        <Text style={styles.assigneeRole}>
+                          {selectedCase.assignedEmployees?.length > 0
+                            ? "Case Manager"
+                            : "Case Creator"}
+                        </Text>
+                        <Text style={styles.assigneeEmail}>
+                          {selectedCase.assignedEmployees?.email || ""}
+                        </Text>
+                      </View>
+                      <TouchableOpacity style={styles.assigneeAction}>
+                        <Feather
+                          name="message-square"
+                          size={20}
+                          color={colors.primary}
                         />
-                      ) : (
-                        <View style={styles.documentIcon}>
-                          <Feather
-                            name="file"
-                            size={32}
-                            color={colors.text.secondary}
-                          />
-                        </View>
-                      )}
+                      </TouchableOpacity>
                     </View>
-                    <View style={styles.documentInfo}>
-                      <Text style={styles.documentName} numberOfLines={1}>
-                        {doc.title || doc.name || `Document ${idx + 1}`}
-                      </Text>
-                      <Text style={styles.documentMeta}>
-                        {doc.description ? doc.description + " • " : ""}
-                        {doc.type ? doc.type.toUpperCase() : "FILE"} • {doc.size || "Unknown size"} • {format(new Date(doc.createdAt || new Date()), "MMM d, yyyy")}
-                      </Text>
-                    </View>
-                    <TouchableOpacity style={styles.documentAction} onPress={() => Linking.openURL(doc.url)}>
-                      <Feather
-                        name="download"
-                        size={20}
-                        color={colors.primary}
-                      />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <View style={styles.emptyState}>
-                  <Feather
-                    name="folder"
-                    size={48}
-                    color={colors.text.secondary}
-                  />
-                  <Text style={styles.emptyStateText}>
-                    No documents uploaded yet
-                  </Text>
-                  <Text style={styles.emptyStateSubtext}>
-                    Upload files, photos, or documents related to this case
-                  </Text>
+                  </View>
+                )}
+            </View>
+          )}
+
+          {/* Documents Tab Content */}
+          {activeTab === "documents" && (
+            <View style={styles.tabContent}>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Documents</Text>
                   <TouchableOpacity
-                    style={styles.uploadButtonLarge}
+                    style={styles.uploadButton}
                     onPress={() => setShowUploadModal(true)}
                   >
-                    <Feather name="upload" size={20} color={colors.primary} />
-                    <Text style={styles.uploadButtonLargeText}>
-                      Upload Documents
-                    </Text>
+                    <Feather name="upload" size={16} color={colors.primary} />
+                    <Text style={styles.uploadButtonText}>Upload</Text>
                   </TouchableOpacity>
                 </View>
-              )}
-            </View>
-          </View>
-        )}
 
-        {/* Timeline Tab Content */}
-        {activeTab === "timeline" && (
-          <View style={styles.tabContent}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Case Timeline</Text>
-              <View style={styles.timeline}>
-                {selectedCase.statusTracker?.map((event: any, index: any) => (
-                  <View style={styles.timelineItem} key={index}>
-                    <View style={styles.timelineDot} />
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineDate}>
-                        {formatDate(event.datetime)}
+                {selectedCase.documents!.length > 0 ? (
+                  selectedCase.documents!.map((doc: any, idx: number) => (
+                    <TouchableOpacity
+                      key={doc._id || idx}
+                      style={styles.documentCard}
+                      onPress={() => handleOpenDocument(doc)}
+                    >
+                      <View style={styles.documentPreview}>
+                        {doc.type === "image" ? (
+                          <Image
+                            source={{ uri: doc.thumbnail || doc.url }}
+                            style={styles.documentImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.documentIcon}>
+                            <Feather
+                              name="file"
+                              size={32}
+                              color={colors.text.secondary}
+                            />
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.documentInfo}>
+                        <Text style={styles.documentName} numberOfLines={1}>
+                          {doc.title || doc.name || `Document ${idx + 1}`}
+                        </Text>
+                        <Text style={styles.documentMeta}>
+                          {doc.description ? doc.description + " • " : ""}
+                          {doc.type ? doc.type.toUpperCase() : "FILE"} •{" "}
+                          {doc.size || "Unknown size"} •{" "}
+                          {format(
+                            new Date(doc.createdAt || new Date()),
+                            "MMM d, yyyy"
+                          )}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.documentAction}
+                        onPress={() => Linking.openURL(doc.url)}
+                      >
+                        <Feather
+                          name="download"
+                          size={20}
+                          color={colors.primary}
+                        />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Feather
+                      name="folder"
+                      size={48}
+                      color={colors.text.secondary}
+                    />
+                    <Text style={styles.emptyStateText}>
+                      No documents uploaded yet
+                    </Text>
+                    <Text style={styles.emptyStateSubtext}>
+                      Upload files, photos, or documents related to this case
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.uploadButtonLarge}
+                      onPress={() => setShowUploadModal(true)}
+                    >
+                      <Feather name="upload" size={20} color={colors.primary} />
+                      <Text style={styles.uploadButtonLargeText}>
+                        Upload Documents
                       </Text>
-                      <Text style={styles.timelineTitle}>
-                        {event.status.charAt(0).toUpperCase() +
-                          event.status.slice(1)}
-                      </Text>
-                      <Text style={styles.timelineText}>
-                        {event.description || "Status updated"}
-                      </Text>
-                      <Text style={styles.timelineActor}>
-                        By: {event.updatedById || "System"}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-                {/* Creation event if not in tracker */}
-                {!selectedCase.statusTracker?.some((e: any) =>
-                  e.description?.includes("created")
-                ) && (
-                  <View style={styles.timelineItem}>
-                    <View style={styles.timelineDot} />
-                    <View style={styles.timelineContent}>
-                      <Text style={styles.timelineDate}>
-                        {formatDate(selectedCase.createdAt)}
-                      </Text>
-                      <Text style={styles.timelineTitle}>Case Created</Text>
-                      <Text style={styles.timelineText}>
-                        Case was initially created
-                      </Text>
-                      <Text style={styles.timelineActor}>
-                        By: {selectedCase.createdByUser?.name || "System"}
-                      </Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
+          {/* Timeline Tab Content */}
+          {activeTab === "timeline" && (
+            <View style={styles.tabContent}>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Case Timeline</Text>
+                <View style={styles.timeline}>
+                  {selectedCase.statusTracker?.map((event: any, index: any) => (
+                    <View style={styles.timelineItem} key={index}>
+                      <View style={styles.timelineDot} />
+                      <View style={styles.timelineContent}>
+                        <Text style={styles.timelineDate}>
+                          {formatDate(event.datetime)}
+                        </Text>
+                        <Text style={styles.timelineTitle}>
+                          {event.status.charAt(0).toUpperCase() +
+                            event.status.slice(1)}
+                        </Text>
+                        <Text style={styles.timelineText}>
+                          {event.description || "Status updated"}
+                        </Text>
+                        <Text style={styles.timelineActor}>
+                          By: {event.updatedById || "System"}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                  {/* Creation event if not in tracker */}
+                  {!selectedCase.statusTracker?.some((e: any) =>
+                    e.description?.includes("created")
+                  ) && (
+                    <View style={styles.timelineItem}>
+                      <View style={styles.timelineDot} />
+                      <View style={styles.timelineContent}>
+                        <Text style={styles.timelineDate}>
+                          {formatDate(selectedCase.createdAt)}
+                        </Text>
+                        <Text style={styles.timelineTitle}>Case Created</Text>
+                        <Text style={styles.timelineText}>
+                          Case was initially created
+                        </Text>
+                        <Text style={styles.timelineActor}>
+                          By: {selectedCase.createdByUser?.name || "System"}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      )}
+      {!isLoading&&<TouchableOpacity
         style={styles.fab}
         onPress={() => setShowAddModal(true)}
       >
         <Feather name="edit" size={24} color="white" />
-      </TouchableOpacity>
+      </TouchableOpacity>}
       <AddCaseModal
         visible={showAddModal}
         onClose={() => {
@@ -554,7 +550,6 @@ const CaseDetailPage = () => {
         selectedCase={selectedCase}
         setSelectedCase={(value: any) => {}}
       />
-
       <AddDocumentModal
         visible={showUploadModal}
         onClose={() => setShowUploadModal(false)}

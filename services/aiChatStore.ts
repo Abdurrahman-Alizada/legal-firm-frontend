@@ -1,155 +1,129 @@
 // src/services/chatStore.ts
+import { AIChatMessage, AIChatSession } from '@/types';
 import { create } from 'zustand';
 import { api } from './api/apiIntercepters';
 
 export type MessageRole = 'user' | 'assistant';
 
-export interface ChatMessage {
-  _id: string;
-  sessionId: string;
-  content: string;
-  role: MessageRole;
-  createdAt: string;
-}
-
-export interface ChatSession {
-  _id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  messages: ChatMessage[];
-}
-
 interface ChatState {
-  sessions: ChatSession[];
-  currentSession: ChatSession | null;
-  loading: boolean;
-  error: string | null;
-  
-  createSession: () => Promise<void>;
-  fetchSessions: () => Promise<void>;
-  fetchSession: (sessionId: string) => Promise<void>;
-  sendMessage: (message: string, sessionId?: string) => Promise<void>;
-  clearCurrentSession: () => void;
+    sessions: AIChatSession[];
+    currentSessionId: string | null;
+    currentSessionMessages: AIChatMessage[];
+    loading: boolean;
+    error: string | null;
+
+    createSession: () => Promise<void>;
+    fetchSessions: () => Promise<void>;
+    fetchSessionMessages: (sessionId: string) => Promise<void>;
+    setCurrentSession: (sessionId: string) => Promise<void>;
+    sendMessage: (message: string, sessionId?: string) => Promise<void>;
+    clearCurrentSession: () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
-  sessions: [],
-  currentSession: null,
-  loading: false,
-  error: null,
+export const useAIChatStore = create<ChatState>((set, get) => ({
+    sessions: [],
+    currentSessionId: null,
+    currentSessionMessages: [],
+    loading: false,
+    error: null,
 
-  createSession: async () => {
-    set({ loading: true, error: null });
-    try {
-      // API call to create new session
-      const response = await api.post('/ai-chat/session');
-      const newSession: ChatSession = await response.data.data;
-      
-      set(state => ({
-        sessions: [newSession, ...state.sessions],
-        currentSession: newSession
-      }));
-    } catch (error) {
-      set({ error: 'Failed to create session' });
-    } finally {
-      set({ loading: false });
-    }
-  },
+    createSession: async () => {
+        set({ loading: true, error: null });
+        try {
+            const response = await api.post('/ai-chat/session');
+            const newSession: AIChatSession = response.data.data;
+            set(state => ({
+                sessions: [newSession, ...state.sessions],
+            }));
+            // Optionally, set as current session
+            await get().setCurrentSession(newSession._id);
+        } catch (error) {
+            set({ error: 'Failed to create session' });
+        } finally {
+            set({ loading: false });
+        }
+    },
 
-  fetchSessions: async () => {
-    set({ loading: true, error: null });
-    try {
-      const response = await api.get('/ai-chat/sessions');
-      const sessions: ChatSession[] = await response.data.data;
-      set({ sessions });
-    } catch (error) {
-      set({ error: 'Failed to load sessions' });
-    } finally {
-      set({ loading: false });
-    }
-  },
+    fetchSessions: async () => {
+        set({ loading: true, error: null });
+        try {
+            const response = await api.get('/ai-chat/sessions');
+            const sessions: AIChatSession[] = response.data.data;
+            set({ sessions });
+        } catch (error) {
+            set({ error: 'Failed to load sessions' });
+        } finally {
+            set({ loading: false });
+        }
+    },
 
-  fetchSession: async (sessionId: string) => {
-    set({ loading: true, error: null });
-    try {
-      const response = await api.get(`/ai-chat/session/${sessionId}`);
-      const session: ChatSession = await response.data.data;
-      
-      set(state => ({
-        currentSession: session,
-        sessions: state.sessions.map(s => 
-          s._id === sessionId ? session : s
-        )
-      }));
-    } catch (error) {
-      set({ error: 'Failed to load session' });
-    } finally {
-      set({ loading: false });
-    }
-  },
+    fetchSessionMessages: async (sessionId: string) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await api.get(`/ai-chat/session/${sessionId}`);
+            const messages: AIChatMessage[] = response.data.data;
+            set({ currentSessionMessages: messages });
+        } catch (error) {
+            set({ error: 'Failed to load messages' });
+        } finally {
+            set({ loading: false });
+        }
+    },
 
-  sendMessage: async (message: string, sessionId?: string) => {
-    set({ loading: true, error: null });
-    try {
-      const { currentSession } = get();
-      const targetSessionId = sessionId || currentSession?._id;
-      
-      if (!targetSessionId) {
-        await get().createSession();
-        return get().sendMessage(message);
-      }
+    setCurrentSession: async (sessionId: string) => {
+        set({ currentSessionId: sessionId });
+        await get().fetchSessionMessages(sessionId);
+    },
 
-      // Add user message to UI immediately
-      const userMessage: ChatMessage = {
-        _id: `temp-${Date.now()}`,
-        sessionId: targetSessionId,
-        content: message,
-        role: 'user',
-        createdAt: new Date().toISOString(),
-      };
+    sendMessage: async (message: string, sessionId?: string) => {
+        set({ loading: true, error: null });
+        try {
+            const targetSessionId = sessionId || get().currentSessionId;
+            if (!targetSessionId) {
+                await get().createSession();
+                return get().sendMessage(message);
+            }
+            
+            // Create temporary message object with user message
+            const tempMessage: AIChatMessage = {
+                _id: `temp-${Date.now()}`,
+                userId: '', // Will be set by backend
+                roleId: '', // Will be set by backend
+                message: message,
+                response: '', // Will be filled after API response
+                sessionId: targetSessionId,
+                createdAt: new Date().toISOString(),
+                flaggedForReview: false
+            };
+            
+            // Add the temporary message to UI immediately
+            set(state => ({ 
+                currentSessionMessages: [...state.currentSessionMessages, tempMessage] 
+            }));
+            
+            // Send to backend
+            const response = await api.post('/ai-chat', { 
+                message, 
+                sessionId: targetSessionId 
+            });
+            
+            // The response contains just the AI response string
+            const aiResponse = response.data;
+            
+            // Update the temporary message with the AI response
+            set(state => ({
+                currentSessionMessages: state.currentSessionMessages.map(msg => 
+                    msg._id === tempMessage._id 
+                        ? { ...msg, response: aiResponse }
+                        : msg
+                )
+            }));
+        } catch (error) {
+            set({ error: 'Failed to send message' });
+        } finally {
+            set({ loading: false });
+        }
+    },
 
-      set(state => ({
-        currentSession: state.currentSession ? {
-          ...state.currentSession,
-          messages: [...state.currentSession.messages, userMessage]
-        } : null,
-        sessions: state.sessions.map(session => 
-          session._id === targetSessionId ? {
-            ...session,
-            messages: [...session.messages, userMessage]
-          } : session
-        )
-      }));
-
-      // Send to backend
-      const response = await api.post('/ai-chat', {message,sessionId: targetSessionId });
-
-      const assistantMessage: ChatMessage = await response.data.data;
-
-      // Replace temporary message with server response
-      set(state => ({
-        currentSession: state.currentSession ? {
-          ...state.currentSession,
-          messages: state.currentSession.messages
-            .filter(msg => msg._id !== userMessage._id)
-            .concat(assistantMessage)
-        } : null,
-        sessions: state.sessions.map(session => 
-          session._id === targetSessionId ? {
-            ...session,
-            messages: session.messages
-              .filter(msg => msg._id !== userMessage._id)
-              .concat(assistantMessage)
-          } : session
-        )
-      }));
-    } catch (error) {
-      set({ error: 'Failed to send message' });
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  clearCurrentSession: () => set({ currentSession: null })
+    clearCurrentSession: () => set({ currentSessionId: null, currentSessionMessages: [] })
 }));

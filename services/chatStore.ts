@@ -1,17 +1,16 @@
-import { ChatMessage, ChatThread } from '@/types';
+import { ChatMessage, ChatThread, SCOPE } from '@/types';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { chatService } from './api/chatService';
 
 interface ChatState {
   threads: ChatThread[];
-  messages: Record<string, ChatMessage[]>; // caseId -> messages
+  messages: Record<string, ChatMessage[]>; // threadId -> messages
   loading: boolean;
   error: string | null;
   fetchThreads: () => Promise<void>;
-  fetchMessages: (caseId: string) => Promise<void>;
-  sendMessage: (caseId: string, content: string) => Promise<void>;
-  markAsRead: (caseId: string) => void;
+  fetchMessages: (threadId: string) => Promise<void>;
+  sendMessage: (scope: SCOPE, threadId: string, content: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -33,14 +32,13 @@ export const useChatStore = create<ChatState>()(
       }
     },
 
-    fetchMessages: async (caseId) => {
+    fetchMessages: async (threadId) => {
       try {
         set({ loading: true, error: null });
-        const messages = await chatService.getMessages(caseId);
+        const messages = await chatService.getMessages(threadId);
         set((state) => {
-          state.messages[caseId] = messages;
+          state.messages[threadId] = messages;
         });
-        get().markAsRead(caseId);
       } catch (error) {
         set({ error: 'Failed to load messages' });
       } finally {
@@ -48,42 +46,21 @@ export const useChatStore = create<ChatState>()(
       }
     },
 
-    sendMessage: async (caseId, content) => {
+    sendMessage: async (scope, threadId, content) => {
       try {
         set({ loading: true });
-        const newMessage = await chatService.sendMessage(caseId, content);
-        
-        // Update messages
+        const newMessage = await chatService.sendMessage(scope, threadId, content);
         set((state) => {
-          if (!state.messages[caseId]) {
-            state.messages[caseId] = [];
+          if (!state.messages[threadId]) {
+            state.messages[threadId] = [];
           }
-          state.messages[caseId].push(newMessage);
-        });
-        
-        // Update thread with last message
-        set((state) => {
-          const thread = state.threads.find((t:any) => t.caseId === caseId);
-          if (thread) {
-            thread.lastMessage = content;
-            thread.lastMessageAt = newMessage.createdAt;
-            thread.unreadCount = 0;
-          }
+          state.messages[threadId].push(newMessage);
         });
       } catch (error) {
         set({ error: 'Failed to send message' });
       } finally {
         set({ loading: false });
       }
-    },
-
-    markAsRead: (caseId) => {
-      set((state) => {
-        const thread = state.threads.find((t :any)=> t.caseId === caseId);
-        if (thread) {
-          thread.unreadCount = 0;
-        }
-      });
     },
   }))
 );

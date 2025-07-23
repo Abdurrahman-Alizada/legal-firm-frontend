@@ -3,22 +3,25 @@ import { useAuthStore } from "@/services/authStore";
 import { Ionicons, Octicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
 const LegalPracticeScreen = () => {
+  const [loading, setLoading] = useState(false);
   const { isAuthenticated, loadFromStorage } = useAuthStore();
 
   useEffect(() => {
+    setLoading(true);
     loadFromStorage().then((res) => {
       if (res) {
         if (res === "admin") {
@@ -27,22 +30,30 @@ const LegalPracticeScreen = () => {
           router.replace("/(client)");
         }
       }
+      setLoading(false);
     });
   }, []);
 
   const handleStartFreeTrial = () => {
-    router.replace("/(auth)");
+    router.push("/(auth)");
   };
 
   const handleAdminDemo = () => {
-    router.replace("/(admin)");
+    router.push("/(admin)");
   };
 
   const handleClientDemo = () => {
-    router.replace("/(client)");
+    router.push("/(client)");
   };
 
-  return (
+  return loading ? (
+    <View style={styles.centerContainer}>
+      <Image
+        style={styles.logoimg}
+        source={require("@/assets/images/icon.jpg")}
+      />
+    </View>
+  ) : (
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
@@ -87,9 +98,9 @@ const LegalPracticeScreen = () => {
                 color="white"
                 style={styles.buttonIcon}
               />
-              <Text style={styles.primaryButtonText}>Start Free Trial</Text>
+              <Text style={styles.primaryButtonText}>Start Free</Text>
             </TouchableOpacity>
-
+{/* 
             <TouchableOpacity
               style={[styles.button, styles.secondaryButton]}
               onPress={handleAdminDemo}
@@ -116,7 +127,7 @@ const LegalPracticeScreen = () => {
                 style={styles.buttonIcon}
               />
               <Text style={styles.secondaryButtonText}>Client Demo</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* Feature Cards */}
@@ -168,12 +179,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f9fa",
   },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoimg: {
+    width: 200,
+    height: 200,
+    borderRadius:30
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 60,
   },
   header: {
     paddingHorizontal: 20,

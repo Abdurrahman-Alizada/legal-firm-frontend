@@ -2,14 +2,14 @@ import { colors, fonts, layout, spacing } from '@/constants';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TextInputProps,
-    TextStyle,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from 'react-native';
 
 interface CustomInputProps extends TextInputProps {
@@ -69,7 +69,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
         )}
       </View>
 
-      {!!error && <Text style={styles.error}>{error}</Text>}
+      <Text style={styles.error}>{!!error && error}</Text>
     </View>
   );
 };
@@ -97,14 +97,13 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: fonts.sizes.sm,
+    fontSize: 15,
     color: '#000',
   },
   icon: {
     marginHorizontal: 4,
   },
   error: {
-    marginTop: 4,
     fontSize: 12,
     color: 'red',
   },

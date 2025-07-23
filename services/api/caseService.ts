@@ -75,3 +75,15 @@ export const caseService = {
     }
   },
 };
+
+export const generateSettlementAgreement = (id: string, data: any) =>
+  api.post(`/case-pdfs/generate/settlement/${id}`, data);
+
+export const generateMedicalRequest = (id: string, data: any) =>
+  api.post(`/case-pdfs/generate/medical-request/${id}`, data);
+
+export const generateCourtFilingRequest = (id: string, data: any) =>
+  api.post(`/case-pdfs/generate/court-filing-request/${id}`, data);
+
+export const generateClientIntakeRequest = (id: string, data: any) =>
+  api.post(`/case-pdfs/generate/client-intake-request/${id}`, data);

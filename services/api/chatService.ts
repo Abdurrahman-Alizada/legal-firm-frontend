@@ -1,44 +1,53 @@
-// src/services/chatService.ts
-import { ChatMessage, ChatThread } from '@/types';
+import { ChatMessage, ChatThread, SCOPE } from '@/types';
 import { api } from './apiIntercepters';
 
-// Mock implementation - replace with actual API calls
-export const chatService = {
-  async sendMessage(caseId: string, content: string): Promise<ChatMessage> {
-    try {
-      const response =await api.post(`/chat/send`,{caseId,content});
-      return response.data.data      
-    } catch (error:any) {
-      console.log(error)
-      throw new Error(error.message||'Failed to send message'); 
-    }
-  },
 
-  async getMessages(caseId: string): Promise<ChatMessage[]> {
-    try {
-      const response =await api.get(`/chat/case/${caseId}`);
-      return response.data.data    
-    } catch (error:any) {
-      throw new Error(error.message||'Failed to get message'); 
-    }
-  },
- 
+export const chatService = {
   async getChatThreads(): Promise<ChatThread[]> {
     try {
-      const {data} =await api.get(`/chat-thread`);
-      return data.data.map((item: any) => ({
-      _id: item._id,
-      caseId: item.caseId,
-      caseTitle: item.caseTitle || 'Untitled Case',
-      lastMessage: item.lastMessage,
-      lastMessageAt: item.lastMessageAt,
-      participants: item.participants || [],
-      unreadCount: item.unreadCount || 0
-    }));   
-    } catch (error:any) {
-      throw new Error(error.message||'Failed to get message'); 
+      const { data } = await api.get(`/chat-thread`);
+      return data.data
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get message');
     }
-  }
-    
+  },
+  async createChatThread(data: {
+    scope: SCOPE,
+    caseId?: string,
+    clientCompanyId?: string,
+    lawCompanyId?: string
+  }) {
+    try {
+      const response = await api.post(`/chat-thread`, data);
+      return response.data.data
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get message');
+    }
+  },
+  async getChatThreadById(threadId: string) {
+    try {
+      const response = await api.get(`/chat-thread/${threadId}`);
+      return response.data
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get message');
+    }
+  },
+  async sendMessage(scope: SCOPE, threadId: string, content: string): Promise<ChatMessage> {
+    try {
+      const response = await api.post(`/messages`, { threadId, content });
+      return response.data
+    } catch (error: any) {
+      console.log(error)
+      throw new Error(error.message || 'Failed to send message');
+    }
+  },
 
+  async getMessages(threadId: string): Promise<ChatMessage[]> {
+    try {
+      const response = await api.get(`/messages/thread/${threadId}`);
+      return response.data.data
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to get message');
+    }
+  },
 };

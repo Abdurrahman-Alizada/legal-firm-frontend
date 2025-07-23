@@ -7,16 +7,15 @@ import { authService } from "@/services/api/authService";
 import { useAuthStore } from "@/services/authStore";
 import { adminRole, clientRole } from "@/types";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 export default function FirmLinkAuthScreen() {
@@ -31,42 +30,128 @@ export default function FirmLinkAuthScreen() {
     phone: "",
     roleId: "",
   });
+  // Error state for signup
+  const [signupErrors, setSignupErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    roleId: "",
+  });
+  // Debounce refs for signup
+  const signupDebounceRefs = useRef({
+    name: null as any,
+    email: null as any,
+    password: null as any,
+    phone: null as any,
+    roleId: null as any,
+  });
 
   // State for auth mode
   const [authMode, setAuthMode] = useState<"signup" | "login" | "reset">(
     "signup"
   );
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [loginErrors, setLoginErrors] = useState({ email: "", password: "" });
+  const loginDebounceRefs = useRef({ email: null as any, password: null as any });
+
   const [resetEmail, setResetEmail] = useState("");
+  const [resetErrors, setResetErrors] = useState({ email: "" });
+  const resetDebounceRef = useRef<any>(null);
   const [obsecurePass, setObsecurePass] = useState(false);
 
-  const handleInputChange = (field: any, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // --- Validation Functions ---
+  const validateEmail = (email: string) => {
+    if (!email) return "Email is required";
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email) ? "" : "Invalid email format";
+  };
+  const validatePassword = (password: string) => {
+    if (!password) return "Password is required";
+    if (password.length < 6) return "Password must be at least 6 characters";
+    return "";
+  };
+  const validateName = (name: string) => {
+    if (!name) return "Name is required";
+    return "";
+  };
+  const validatePhone = (phone: string) => {
+    if (!phone) return "Phone is required";
+    // Simple phone validation (10-15 digits)
+    const re = /^\d{10,15}$/;
+    return re.test(phone) ? "" : "Invalid phone number";
+  };
+  const validateRoleId = (roleId: string) => {
+    if (!roleId) return "Role is required";
+    return "";
   };
 
-  const handleNextStep = () => {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+  // --- Debounced Validation Handlers ---
+  const handleSignupInputChange = (field: keyof typeof formData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (signupDebounceRefs.current[field]) {
+      clearTimeout(signupDebounceRefs.current[field]);
     }
+    signupDebounceRefs.current[field] = setTimeout(() => {
+      let error = "";
+      switch (field) {
+        case "name":
+          error = validateName(value);
+          break;
+        case "email":
+          error = validateEmail(value);
+          break;
+        case "password":
+          error = validatePassword(value);
+          break;
+        case "phone":
+          error = validatePhone(value);
+          break;
+        case "roleId":
+          error = validateRoleId(value);
+          break;
+      }
+      setSignupErrors((prev) => ({ ...prev, [field]: error }));
+    }, 500);
   };
 
-  const handlePreviousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+  const handleLoginInputChange = (field: keyof typeof loginData, value: string) => {
+    setLoginData((prev) => ({ ...prev, [field]: value }));
+    if (loginDebounceRefs.current[field]) {
+      clearTimeout(loginDebounceRefs.current[field]);
     }
+    loginDebounceRefs.current[field] = setTimeout(() => {
+      let error = "";
+      if (field === "email") error = validateEmail(value);
+      if (field === "password") error = value ? "" : "Password is required";
+      setLoginErrors((prev) => ({ ...prev, [field]: error }));
+    }, 500);
   };
 
-  const isStepComplete = (step: any) => {
-    if (step === 1) return formData.name && formData.email && formData.phone;
-    return false;
+  const handleResetInputChange = (text: string) => {
+    setResetEmail(text);
+    if (resetDebounceRef.current) clearTimeout(resetDebounceRef.current);
+    resetDebounceRef.current = setTimeout(() => {
+      setResetErrors({ email: validateEmail(text) });
+    }, 500);
   };
 
   const handleSignUp = () => {
-    if (!formData.name || !formData.email || !formData.password) {
-      Alert.alert("Please fill in all fields");
+    // Validate all fields before submit
+    const nameError = validateName(formData.name);
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+    const phoneError = validatePhone(formData.phone);
+    const roleIdError = validateRoleId(formData.roleId);
+    setSignupErrors({
+      name: nameError,
+      email: emailError,
+      password: passwordError,
+      phone: phoneError,
+      roleId: roleIdError,
+    });
+    if (nameError || emailError || passwordError || phoneError || roleIdError) {
+      Alert.alert("Please fix the errors before submitting");
       return;
     }
     register({ ...formData });
@@ -109,7 +194,56 @@ export default function FirmLinkAuthScreen() {
             {error}
           </Text>
         )}
-        {renderStepContent()}
+        <View style={styles.formContainer}>
+          <DropdownInput
+            label="Role"
+            data={[
+              { label: adminRole.name, value: adminRole._id },
+              { label: clientRole.name, value: clientRole._id },
+            ]}
+            onSelect={(text) => handleSignupInputChange("roleId", text.value)}
+            value={formData.roleId ? String(formData.roleId) : ""}
+            containerStyle={{ margin: 0 }}
+          />
+          {signupErrors.roleId ? (
+            <Text style={{ color: "red", fontSize: 12 }}>{signupErrors.roleId}</Text>
+          ) : null}
+          <CustomInput
+            label="Full Name"
+            placeholder="Name"
+            value={formData.name}
+            onChangeText={(text) => handleSignupInputChange("name", text)}
+            autoCapitalize="words"
+            error={signupErrors.name}
+          />
+          <CustomInput
+            label="Phone Number"
+            placeholder="Number"
+            value={formData.phone}
+            onChangeText={(text) => handleSignupInputChange("phone", text)}
+            error={signupErrors.phone}
+          />
+          <CustomInput
+            label="Email"
+            placeholder="Email"
+            value={formData.email}
+            onChangeText={(text) => handleSignupInputChange("email", text)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={signupErrors.email}
+          />
+          <CustomInput
+            label="Password"
+            placeholder="Password"
+            autoCapitalize="none"
+            autoComplete="password-new"
+            secureTextEntry
+            value={formData.password}
+            onChangeText={(text) => handleSignupInputChange("password", text)}
+            secureTextToggle
+            error={signupErrors.password}
+          />
+        </View>
       </View>
       <Button
         title="Sign up"
@@ -118,31 +252,9 @@ export default function FirmLinkAuthScreen() {
         variant="primary"
         style={styles.mainButton}
       />
-      {/* <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.button, styles.previousButton, currentStep === 1 && styles.buttonDisabled]}
-          onPress={handlePreviousStep}
-          disabled={currentStep === 1}
-        >
-          <Text style={[styles.buttonText, styles.previousButtonText]}>Previous</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.nextButton,
-            (currentStep === 1 && !isStepComplete(1)) && styles.buttonDisabled
-          ]}
-          onPress={handleNextStep}
-          disabled={currentStep === 1 && !isStepComplete(1)}
-        >
-          <Text style={[styles.buttonText, styles.nextButtonText]}>
-            {currentStep === 3 ? 'Get Started' : 'Next Step'}
-          </Text>
-        </TouchableOpacity>
-      </View> */}
       <View style={styles.signInContainer}>
         <Text style={styles.signInText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => setAuthMode("login")}>
+        <TouchableOpacity onPress={() => setAuthMode("login")}> 
           <Text style={styles.signInLink}>Sign In</Text>
         </TouchableOpacity>
       </View>
@@ -164,19 +276,21 @@ export default function FirmLinkAuthScreen() {
             label="Email"
             placeholder="Email"
             value={loginData.email}
-            onChangeText={(text)=>setLoginData({...loginData,email:text})}
+            onChangeText={(text)=>handleLoginInputChange("email", text)}
             keyboardType="email-address"
             autoCapitalize="none"
+            error={loginErrors.email}
           />
-
           <CustomInput
             label="Password"
             placeholder="Password"
             value={loginData.password}
-            onChangeText={(text)=>setLoginData({...loginData,password:text})}
+            onChangeText={(text)=>handleLoginInputChange("password", text)}
+            secureTextEntry
             secureTextToggle
             autoCapitalize="none"
-              autoComplete="password-new"
+            autoComplete="password-new"
+            error={loginErrors.password}
           />
           <TouchableOpacity
             style={{ alignSelf: "flex-end", marginTop: spacing.xs }}
@@ -188,14 +302,24 @@ export default function FirmLinkAuthScreen() {
       </View>
       <Button
         title="Login"
-        onPress={() => login(loginData)}
+        onPress={() => {
+          // Validate before login
+          const emailError = validateEmail(loginData.email);
+          const passwordError = loginData.password ? "" : "Password is required";
+          setLoginErrors({ email: emailError, password: passwordError });
+          if (emailError || passwordError) {
+            Alert.alert("Please fix the errors before submitting");
+            return;
+          }
+          login(loginData);
+        }}
         loading={isLoading}
         variant="primary"
         style={styles.mainButton}
       />
       <View style={styles.signInContainer}>
         <Text style={styles.signInText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => setAuthMode("signup")}>
+        <TouchableOpacity onPress={() => setAuthMode("signup")}> 
           <Text style={styles.signInLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
@@ -210,17 +334,15 @@ export default function FirmLinkAuthScreen() {
           Enter your email to receive reset instructions.
         </Text>
         <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Email"
-              value={resetEmail}
-              onChangeText={setResetEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+        <CustomInput
+            label="Email"
+            placeholder="Email"
+            value={resetEmail}
+            onChangeText={handleResetInputChange}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={resetErrors.email}
+          />
         </View>
       </View>
       <Button
@@ -231,7 +353,7 @@ export default function FirmLinkAuthScreen() {
         style={styles.mainButton}
       />
       <View style={styles.signInContainer}>
-        <TouchableOpacity onPress={() => setAuthMode("login")}>
+        <TouchableOpacity onPress={() => setAuthMode("login")}> 
           <Text style={styles.signInLink}>Back to Login</Text>
         </TouchableOpacity>
       </View>
@@ -242,53 +364,7 @@ export default function FirmLinkAuthScreen() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <View style={styles.formContainer}>
-            <DropdownInput
-              label="Role"
-              data={[
-                { label: adminRole.name, value: adminRole._id },
-                { label: clientRole.name, value: clientRole._id },
-              ]}
-              onSelect={(text) => handleInputChange("roleId", text.value)}
-              value={formData.roleId}
-              containerStyle={{ margin: 0 }}
-            />
-            <CustomInput
-              label="Full Name"
-              placeholder="Name"
-              value={formData.name}
-              onChangeText={(text) => handleInputChange("name", text)}
-              keyboardType="email-address"
-              autoCapitalize="words"
-            />
-
-            <CustomInput
-              label="Phone Number"
-              placeholder="Number"
-              value={formData.phone}
-              onChangeText={(text) => handleInputChange("phone", text)}
-            />
-            <CustomInput
-              label="Email"
-              placeholder="Email"
-              value={formData.email}
-              onChangeText={(text) => handleInputChange("email", text)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <CustomInput
-              label="Password"
-              placeholder="Password"
-              autoCapitalize="none"
-              autoComplete="password-new"
-              value={formData.password}
-              onChangeText={(text) => handleInputChange("password", text)}
-              secureTextToggle
-            />
-          </View>
-        );
+        return null;
       case 2:
         return (
           <View style={styles.stepContentContainer}>
@@ -601,7 +677,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   formContainer: {
-    gap: spacing.md,
   },
   inputGroup: {
     gap: spacing.xs,

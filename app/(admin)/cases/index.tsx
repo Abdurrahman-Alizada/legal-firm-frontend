@@ -161,7 +161,7 @@ export default function CasesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   addButton: {
     backgroundColor: colors.primary,
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
     height: 44,
+    ...layout.shadow.sm,
   },
   searchInput: {
     flex: 1,

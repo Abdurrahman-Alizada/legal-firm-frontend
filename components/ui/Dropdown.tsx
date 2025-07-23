@@ -1,4 +1,4 @@
-import { colors } from '@/constants';
+import { colors, spacing } from '@/constants';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -88,6 +88,7 @@ export default DropdownInput;
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom:spacing.md
   },
   label: {
     marginBottom: 4,

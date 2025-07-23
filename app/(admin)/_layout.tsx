@@ -49,7 +49,6 @@ export default function TabLayout() {
         name="clients" 
         options={{
           title: 'Clients',
-          href:null,
           tabBarIcon: ({ size, color }) => (
             <Users size={size} color={color} />
           ),
@@ -59,8 +58,7 @@ export default function TabLayout() {
         name="documents"
         
         options={{
-          title: 'Documents',
-          href:null,
+          title: 'Docs',
           tabBarIcon: ({ size, color }) => (
             <FileText size={size} color={color} />
           ),

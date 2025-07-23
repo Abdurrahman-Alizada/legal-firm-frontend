@@ -1,83 +1,185 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { colors, fonts, layout, spacing } from '../../constants';
+import { colors, fonts, layout, spacing } from '@/constants';
+import { useCaseStore } from '@/services/caseStore';
+import { useChatStore } from '@/services/chatStore';
+import { ChatThread } from '@/types';
+import { Feather } from '@expo/vector-icons';
+import { formatDistanceToNow } from 'date-fns';
+import { router } from 'expo-router';
+import React, { useEffect } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
-export default function MessagesTab() {
-  const [messageText, setMessageText] = useState('');
-  const handleSendMessage = () => {
-    setMessageText('');
+const MessagesTab = () => {
+  const { threads, loading, error, fetchThreads } = useChatStore();
+  const { cases } = useCaseStore();
+
+  useEffect(() => {
+    fetchThreads();
+  }, []);
+
+  const navigateToChat = (threadId: string) => {
+    router.push(`/chats/${threadId}`);
   };
-  return (
-    <View style={{ backgroundColor: colors.background.card, marginHorizontal: spacing.md, marginBottom: spacing.md, padding: spacing.md, borderRadius: layout.borderRadius.lg, ...layout.shadow.sm }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-        <View style={{ width: 32, height: 32, backgroundColor: colors.primaryLight, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-          <Ionicons name="lock-closed" size={20} color={colors.text.secondary} />
-        </View>
-        <Text style={{ fontSize: fonts.sizes.lg, fontWeight: fonts.weights.semibold, color: colors.text.primary }}>Secure Messages</Text>
+
+  const getCaseTitle = (caseId: string) => {
+    const found = cases.find((c) => c._id === caseId);
+    return found ? found.title : caseId;
+  };
+
+  const renderThread = ({ item }: { item: ChatThread }) => (
+    <TouchableOpacity 
+      style={styles.threadItem} 
+      onPress={() => navigateToChat(item._id)}
+    >
+      <View style={styles.threadAvatar}>
+        <Feather name="message-square" size={24} color={colors.primary} />
       </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: spacing.md }}>
-        <View style={{ backgroundColor: colors.secondary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
-          <Text style={{ fontSize: fonts.sizes.xs, color: colors.text.white, fontWeight: fonts.weights.medium }}>AES-256 Encrypted</Text>
-        </View>
-        <View style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
-          <Text style={{ fontSize: fonts.sizes.xs, color: colors.primary, fontWeight: fonts.weights.medium }}>End-to-End</Text>
-        </View>
+      <View style={styles.threadContent}>
+        <Text style={styles.threadTitle} numberOfLines={1}>
+          {getCaseTitle(item.caseId)}
+        </Text>
+        <Text style={styles.threadPreview} numberOfLines={1}>
+          Thread ID: {item._id}
+        </Text>
       </View>
-      {/* Message from Dr. Beltran */}
-      <View style={{ marginBottom: spacing.md }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: fonts.sizes.base, fontWeight: fonts.weights.semibold, color: colors.primary }}>D</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: fonts.sizes.base, fontWeight: fonts.weights.semibold, color: colors.text.primary, marginBottom: 4 }}>Dr. Beltran</Text>
-            <Text style={{ fontSize: fonts.sizes.sm, color: colors.text.secondary, lineHeight: 20, marginBottom: 8 }}>
-              Lorem ipsum dolor sit amet consectetur. Consequat laoreet sit pharetra maecenas sed sit cursibus. Consequat vitae velit egestas duis risus blandit pretium at.
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: fonts.sizes.xs, color: colors.text.light }}>11:29 am</Text>
-              <View style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ fontSize: 10, color: colors.primary, fontWeight: fonts.weights.medium }}>Encrypted</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+      <View style={styles.threadMeta}>
+        <Text style={styles.threadTime}>
+          {formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true })}
+        </Text>
       </View>
-      {/* Message from Margarito Alonzo */}
-      <View style={{ marginBottom: spacing.md }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: fonts.sizes.base, fontWeight: fonts.weights.semibold, color: colors.primary }}>M</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: fonts.sizes.base, fontWeight: fonts.weights.semibold, color: colors.text.primary, marginBottom: 4 }}>Margarito Alonzo</Text>
-            <Text style={{ fontSize: fonts.sizes.sm, color: colors.text.secondary, lineHeight: 20, marginBottom: 8 }}>
-              Lorem ipsum dolor sit amet consectetur. Consequat laoreet sit pharetra maecenas sed sit cursibus. Consequat vitae velit egestas duis risus blandit pretium at.
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: fonts.sizes.xs, color: colors.text.light }}>11:24 am</Text>
-              <View style={{ backgroundColor: colors.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ fontSize: 10, color: colors.primary, fontWeight: fonts.weights.medium }}>Encrypted</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+    </TouchableOpacity>
+  );
+
+  if (loading && threads.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
-      {/* Message Input */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border.light, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, marginTop: spacing.md }}>
-        <TextInput
-          style={{ flex: 1, fontSize: fonts.sizes.sm, color: colors.text.primary, minHeight: 20 }}
-          placeholder="Message..."
-          value={messageText}
-          onChangeText={setMessageText}
-          placeholderTextColor={colors.text.light}
-          multiline
-        />
-        <TouchableOpacity style={{ marginLeft: 8 }} onPress={handleSendMessage}>
-          <Ionicons name="send" size={20} color={colors.text.secondary} />
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchThreads}>
+          <Text style={styles.retryText}>Try Again</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={threads}
+        renderItem={renderThread}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Feather name="message-square" size={48} color={colors.text.secondary} />
+            <Text style={styles.emptyText}>No chats yet</Text>
+            <Text style={styles.emptySubtext}>Start a conversation by opening a case</Text>
+          </View>
+        }
+      />
     </View>
   );
-} 
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: fonts.sizes.lg,
+    color: colors.error,
+    marginBottom: spacing.md,
+  },
+  retryButton: {
+    padding: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: layout.borderRadius.md,
+  },
+  retryText: {
+    color: 'white',
+    fontWeight: fonts.weights.medium,
+  },
+  listContent: {
+    flexGrow:1,
+    padding: spacing.md,
+  },
+  threadItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.background.primary,
+    borderRadius: layout.borderRadius.md,
+    marginBottom: spacing.sm,
+    ...layout.shadow.sm,
+  },
+  threadAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.background.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  threadContent: {
+    flex: 1,
+  },
+  threadTitle: {
+    fontSize: fonts.sizes.base,
+    fontWeight: fonts.weights.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  threadPreview: {
+    fontSize: fonts.sizes.sm,
+    color: colors.text.secondary,
+  },
+  threadMeta: {
+    position:'absolute',
+    bottom:10,
+    right:10
+  },
+  threadTime: {
+    fontSize: fonts.sizes.xs,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  emptyText: {
+    fontSize: fonts.sizes.xl,
+    color: colors.text.primary,
+    marginTop: spacing.md,
+  },
+  emptySubtext: {
+    fontSize: fonts.sizes.base,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+    textAlign: 'center',
+  },
+});
+
+export default MessagesTab;

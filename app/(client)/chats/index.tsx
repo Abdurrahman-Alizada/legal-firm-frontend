@@ -24,7 +24,6 @@ const ChatListScreen = () => {
   useEffect(() => {
     fetchThreads();
   }, []);
-  console.log(threads);
 
   const navigateToChat = (threadId: string) => {
     router.push(`/chats/${threadId}`);
@@ -115,7 +114,7 @@ const ChatListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.background.secondary,
   },
   centered: {
     flex: 1,

@@ -1,4 +1,5 @@
 import Spinner from "@/components/common/Spinner";
+import { pricingPlans, SubscriptionPlanCard } from "@/components/common/SubscriptionPlans";
 import { ScreenHeader } from "@/components/ui/Headers";
 import { initiateCheckout } from "@/services/api/billingService";
 import { useAuthStore } from "@/services/authStore";
@@ -11,115 +12,12 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
-
-const { width } = Dimensions.get("window");
-
-const pricingPlans = [
-  {
-    title: "Free Plan",
-    subtitle: "Perfect for solo practitioners getting started",
-    price: "$0",
-    period: "per month",
-    buttonText: "Start Free",
-    buttonColor: "#e0e0e0",
-    textColor: "#666",
-    onPressKey: "free",
-    features: [
-      "5 Cases per month",
-      "Basic case management",
-      "Email support",
-      "Document storage (1GB)",
-      "Basic templates",
-    ],
-  },
-  {
-    priceId: "price_1RiHAaKwNCwsnrlDiG1iA3rM",
-    title: "Solo Plan",
-    subtitle: "For individual attorneys, limited legal practice",
-    price: "$19.99",
-    period: "per month",
-    buttonText: "Upgrade to pro",
-    buttonColor: "#ff5722",
-    isPopular: true,
-    onPressKey: "pro",
-    features: [
-      "50 Cases per month",
-      "Advanced case management",
-      "Priority email support",
-      "Document storage (25GB)",
-      "Premium templates",
-      "Unlimited AI assistant",
-      "Custom branding",
-      "Advanced reporting",
-    ],
-  },
-  {
-    priceId: "price_1RiHAbKwNCwsnrlD9WTDIJ4e",
-    title: "Small Firm",
-    subtitle: "For small firms with 2-10 attorneys",
-    price: "$299",
-    period: "per month",
-    buttonText: "Upgrade to plus",
-    buttonColor: "#2196f3",
-    onPressKey: "plus",
-    features: [
-      "Unlimited cases",
-      "Multi-user access (up to 10)",
-      "Phone & email support",
-      "Document storage (100GB)",
-      "Team collaboration tools",
-      "Advanced client portal",
-      "Custom integrations",
-      "Firm-wide analytics",
-      "Settlement management",
-      "Multi-language support",
-    ],
-  },
-  {
-    priceId: "price_1RiHAcKwNCwsnrlD96JUT2nO",
-    title: "Growth Firm",
-    subtitle: "For growing firms with 10+ attorneys",
-    price: "$699",
-    period: "per month",
-    buttonText: "Contact Sales",
-    buttonColor: "#2196f3",
-    onPressKey: "sales",
-    features: [
-      "Everything in Small Firm",
-      "Unlimited users",
-      "24/7 phone support",
-      "Document storage (500GB)",
-      "White-label solution",
-      "Premium API access",
-      "Custom development",
-      "Dedicated account manager",
-      "Advanced security features",
-      "HIPAA compliance tools",
-      "Enterprise SSO",
-    ],
-  },
-];
-
-type pricingCardProps = {
-  title: string;
-  subtitle: string;
-  price: string;
-  period: string;
-  buttonText: string;
-  buttonColor: string;
-  onPress: () => void;
-  isSubscribed:boolean;
-  features: string[];
-  isPopular?: boolean;
-  textColor?: string;
-};
 
 const PricingScreen = () => {
   const [expandedNotes, setExpandedNotes] = useState(false);
@@ -148,51 +46,6 @@ const PricingScreen = () => {
       >
         {text}
       </Text>
-    </View>
-  );
-
-  const PricingCard = ({
-    title,
-    subtitle,
-    price,
-    period,
-    isSubscribed,
-    buttonText,
-    buttonColor,
-    onPress,
-    features,
-    isPopular = false,
-    textColor = "#333",
-  }: pricingCardProps) => (
-    <View key={title} style={[styles.pricingCard, isPopular && styles.popularCard]}>
-      {isPopular && (
-        <View style={styles.popularBadge}>
-          <Text style={styles.popularBadgeText}>MOST POPULAR</Text>
-        </View>
-      )}
-
-      <Text style={[styles.planTitle, { color: textColor }]}>{title}</Text>
-      <Text style={styles.planSubtitle}>{subtitle}</Text>
-
-      <View style={styles.priceContainer}>
-        <Text style={[styles.price, { color: textColor }]}>{price}</Text>
-        <Text style={styles.period}>{period}</Text>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.planButton, { backgroundColor: buttonColor }]}
-        onPress={onPress}
-        activeOpacity={0.8}
-        disabled={loading || isSubscribed}
-      >
-          <Text style={styles.planButtonText}>{isSubscribed?"Currently Subscribed":buttonText}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.featuresContainer}>
-        {features.map((feature, index) => (
-          <FeatureItem key={index} text={feature} />
-        ))}
-      </View>
     </View>
   );
 
@@ -352,18 +205,19 @@ const PricingScreen = () => {
           {/* Pricing Cards */}
           <View style={styles.pricingSection}>
             {pricingPlans.map((plan, index) => (
-              <PricingCard
+              <SubscriptionPlanCard
                 key={index}
                 title={plan.title}
                 subtitle={plan.subtitle}
                 price={plan.price}
                 period={plan.period}
-                isSubscribed={currentPlan?.stripePlanId==plan.priceId}
                 buttonText={plan.buttonText}
                 buttonColor={plan.buttonColor}
                 textColor={plan.textColor}
                 isPopular={plan.isPopular}
                 features={plan.features}
+                isCurrentPlan={currentPlan?.stripePlanId === plan.priceId}
+                loading={loading}
                 onPress={() => handleUpgrade(plan.priceId, plan)}
               />
             ))}

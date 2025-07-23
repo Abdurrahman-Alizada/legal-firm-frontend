@@ -19,3 +19,23 @@ export const getCurrentPlan = async () => {
     throw new Error(error.message);
   }
 };
+
+export const getCompanies = async (type:"law"|"client") => {
+  try {
+    const response = await api.get(`/company?type=${type}`);
+    return response.data
+  } catch (error: any) {
+    console.error('Error getting companies:', error);
+    throw new Error(error.message);
+  }
+};
+
+export const getRecentClients = async () => {
+  try {
+    const response = await api.get(`/company/recent-clients`);
+    return response.data
+  } catch (error: any) {
+    console.error('Error getting companies:', error);
+    throw new Error(error.message);
+  }
+};

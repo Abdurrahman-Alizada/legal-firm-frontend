@@ -1,69 +1,89 @@
-import { TabHeader } from '@/components/ui/Headers';
-import { colors, fonts, layout, spacing } from '@/constants';
-import { Mail, MapPin, Phone, Plus, Search } from 'lucide-react-native';
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-const mockClients = [
-  {
-    id: '1',
-    name: 'TechCorp Inc.',
-    email: 'contact@techcorp.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    avatar: 'https://images.pexels.com/photos/5668882/pexels-photo-5668882.jpeg?auto=compress&cs=tinysrgb&w=150&h=150',
-    activeCases: 3,
-    type: 'Corporate'
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@email.com',
-    phone: '+1 (555) 987-6543',
-    location: 'New York, NY',
-    avatar: 'https://images.pexels.com/photos/3586798/pexels-photo-3586798.jpeg?auto=compress&cs=tinysrgb&w=150&h=150',
-    activeCases: 1,
-    type: 'Individual'
-  },
-  {
-    id: '3',
-    name: 'Property Developers LLC',
-    email: 'info@propdev.com',
-    phone: '+1 (555) 456-7890',
-    location: 'Los Angeles, CA',
-    avatar: 'https://images.pexels.com/photos/5668473/pexels-photo-5668473.jpeg?auto=compress&cs=tinysrgb&w=150&h=150',
-    activeCases: 2,
-    type: 'Corporate'
-  },
-  {
-    id: '4',
-    name: 'Michael Chen',
-    email: 'michael.chen@email.com',
-    phone: '+1 (555) 321-0987',
-    location: 'Seattle, WA',
-    avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150',
-    activeCases: 1,
-    type: 'Individual'
-  }
-];
+import { TabHeader } from "@/components/ui/Headers";
+import { colors, fonts, layout, spacing } from "@/constants";
+import { getRecentClients } from "@/services/api/billingService";
+import { chatService } from "@/services/api/chatService";
+import { useAuthStore } from "@/services/authStore";
+import { useChatStore } from "@/services/chatStore";
+import { router } from "expo-router";
+import {
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone
+} from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function ClientsScreen() {
-  const renderClientCard = (client: typeof mockClients[0]) => (
-    <TouchableOpacity key={client.id} style={styles.clientCard}>
+  const [recentClients, setRecentClients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [messageloading, setMessageLoading] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { user } = useAuthStore();
+  const { fetchThreads } = useChatStore();
+
+  useEffect(() => {
+    setLoading(true);
+    getRecentClients()
+      .then((res) => setRecentClients(res.data))
+      .catch((err) => {
+        Toast.show({ type: "error", text1: "Failed to load companies" });
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const onMessagePress = async (id: string) => {
+    setMessageLoading(id);
+    try {
+      const res = await chatService.createChatThread({
+        scope: "direct",
+        clientCompanyId: id,
+        lawCompanyId: user?.companyId,
+      });
+      console.log(res);
+      await fetchThreads();
+      router.push(`/chats/${res._id}`);
+    } catch (err: any) {
+      Toast.show({ type: "error", text1: err.message });
+    } finally {
+      setMessageLoading(null);
+    }
+  };
+  const renderClientCard = (client: any) => (
+    <TouchableOpacity key={client.email} style={styles.clientCard}>
       <View style={styles.clientHeader}>
-        <Image source={{ uri: client.avatar }} style={styles.clientAvatar} />
+        <Image
+          source={require("@/assets/images/user.png")}
+          style={styles.clientAvatar}
+        />
         <View style={styles.clientInfo}>
           <View style={styles.clientNameRow}>
             <Text style={styles.clientName} numberOfLines={1}>
               {client.name}
             </Text>
-            <View style={[styles.typeBadge, client.type === 'Corporate' ? styles.corporateBadge : styles.individualBadge]}>
-              <Text style={styles.typeText}>{client.type}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.messageButton}
+              onPress={() => onMessagePress(client._id)}
+            >
+              {client._id === messageloading ? (
+                <ActivityIndicator />
+              ) : (
+                <MessageCircle size={24} color="#2563EB" />
+              )}
+            </TouchableOpacity>
           </View>
           <Text style={styles.clientCases}>
-            {client.activeCases} active case{client.activeCases !== 1 ? 's' : ''}
+            {client.activeCase??1} active case{client.activeCases !== 1 ? "s" : ""}
           </Text>
         </View>
       </View>
@@ -77,14 +97,12 @@ export default function ClientsScreen() {
         </View>
         <View style={styles.clientDetail}>
           <Phone size={16} color={colors.text.secondary} />
-          <Text style={styles.clientDetailText}>
-            {client.phone}
-          </Text>
+          <Text style={styles.clientDetailText}>{client.phone || "N/A"}</Text>
         </View>
         <View style={styles.clientDetail}>
           <MapPin size={16} color={colors.text.secondary} />
           <Text style={styles.clientDetailText}>
-            {client.location}
+            {client.location || "N/A"}
           </Text>
         </View>
       </View>
@@ -92,37 +110,20 @@ export default function ClientsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TabHeader title='Clients' onRight={ <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.searchButton}>
-            <Search size={24} color={colors.text.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
-            <Plus size={24} color={colors.text.white} />
-          </TouchableOpacity>
-        </View>}/>
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>24</Text>
-          <Text style={styles.statLabel}>Total Clients</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>18</Text>
-          <Text style={styles.statLabel}>Corporate</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>6</Text>
-          <Text style={styles.statLabel}>Individual</Text>
-        </View>
-      </View>
-
+    <View style={styles.container}>
+      <TabHeader
+        title="Clients"
+        showSearch={true}
+        onSearchChange={(text) => {
+          setSearchQuery(text);
+        }}
+      />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.clientsList}>
-          {mockClients.map(renderClientCard)}
+          {recentClients.map(renderClientCard)}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
   },
   headerActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
   },
   searchButton: {
@@ -140,20 +141,20 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   addButton: {
     backgroundColor: colors.primary,
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     ...layout.shadow.sm,
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: spacing.lg,
     gap: spacing.md,
   },
@@ -162,11 +163,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
     padding: spacing.lg,
     borderRadius: layout.borderRadius.lg,
-    alignItems: 'center',
+    alignItems: "center",
     ...layout.shadow.sm,
   },
   statNumber: {
-    fontSize: fonts.sizes['2xl'],
+    fontSize: fonts.sizes["2xl"],
     fontWeight: fonts.weights.bold,
     color: colors.primary,
     marginBottom: spacing.xs,
@@ -177,7 +178,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginBottom:30
   },
   clientsList: {
     padding: spacing.lg,
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
     ...layout.shadow.sm,
   },
   clientHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   clientAvatar: {
@@ -203,10 +203,13 @@ const styles = StyleSheet.create({
   clientInfo: {
     flex: 1,
   },
+  messageButton: {
+    padding: 8,
+  },
   clientNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: spacing.xs,
   },
   clientName: {
@@ -222,10 +225,10 @@ const styles = StyleSheet.create({
     borderRadius: layout.borderRadius.sm,
   },
   corporateBadge: {
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primary + "20",
   },
   individualBadge: {
-    backgroundColor: colors.secondary + '20',
+    backgroundColor: colors.secondary + "20",
   },
   typeText: {
     fontSize: fonts.sizes.xs,
@@ -240,8 +243,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   clientDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
   },
   clientDetailText: {

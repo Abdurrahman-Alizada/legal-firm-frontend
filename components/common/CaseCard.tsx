@@ -13,10 +13,11 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface CaseCardProps {
   case_: Case;
-  onMenu: (case_: Case) => void;
-  menuOpen: boolean;
-  onEdit: () => void;
-  onCloseMenu: () => void;
+  onMenu?: (case_: Case) => void;
+  menuOpen?: boolean;
+  onEdit?: any;
+  onCloseMenu?: any;
+  onPress?: () => void;
 }
 
 const CaseCard = ({
@@ -25,13 +26,14 @@ const CaseCard = ({
   menuOpen,
   onEdit,
   onCloseMenu,
+  onPress=()=>router.push(`/cases/${case_._id}`)
 }: CaseCardProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { deleteCase } = useCaseStore();
 
   return (
     <>
-    <TouchableOpacity key={case_._id} onPress={()=>router.push(`/cases/${case_._id}`)} style={styles.caseCard}>
+    <TouchableOpacity key={case_._id} onPress={onPress} style={styles.caseCard}>
       <View style={styles.caseHeader}>
         <View style={styles.caseHeaderLeft}>
           <Text style={styles.caseTitle} numberOfLines={1}>
@@ -39,12 +41,12 @@ const CaseCard = ({
           </Text>
           <Text style={styles.caseClient}>{case_.clientName}</Text>
         </View>
-        <TouchableOpacity
+        {onMenu && <TouchableOpacity
           style={styles.moreButton}
           onPress={() => onMenu(case_)}
         >
           <Ellipsis size={20} color={colors.text.secondary} />
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
       {case_.description && (
         <Text style={styles.caseDescription} numberOfLines={2}>
@@ -79,7 +81,7 @@ const CaseCard = ({
       </View>
       </TouchableOpacity>
 
-      {menuOpen && (
+      {onMenu && menuOpen && (
         <Modal
           visible={true}
           transparent

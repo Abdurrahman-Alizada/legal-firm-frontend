@@ -9,7 +9,7 @@ export const authService = {
       const response = await axios.post(`${API_BASE_URL}/auth/login`,{...credentials});
       return response.data;
     } catch (error: any) {
-      throw new Error(error);
+      throw new Error(error.status==400?"Invalid credentials":error.message);
     }
 
   },
@@ -19,7 +19,7 @@ export const authService = {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, { ...credentials });
       return response.data;
     } catch (error:any) {
-      throw new Error(error.message);
+      throw new Error(error.status==409?"Email already in use":error.message);
     }
   },
 

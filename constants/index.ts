@@ -17,9 +17,10 @@ export const colors = {
   },
   background: {
     primary: '#FFFFFF',
-    secondary: '#F3F4F8',
+    secondary: '#F7FAFC',
     dark: '#111827',
-    card: '#FFFFFF'
+    card: '#FFFFFF',
+    primaryLight:"#7aa9f5"
   },
   border: {
     light: '#E5E7EB',
@@ -96,37 +97,3 @@ export const layout = {
   }
 } as const;
 
-export const API_ENDPOINTS = {
-  BASE_URL: 'https://api.firmlink.ai',
-  AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    REFRESH: '/auth/refresh'
-  },
-  CASES: {
-    LIST: '/cases',
-    CREATE: '/cases',
-    DETAIL: (id: string) => `/cases/${id}`
-  },
-  CLIENTS: {
-    LIST: '/clients',
-    CREATE: '/clients',
-    DETAIL: (id: string) => `/clients/${id}`
-  }
-} as const;
-
-export const SCREEN_NAMES = {
-  TABS: '(tabs)',
-  HOME: 'index',
-  CASES: 'cases',
-  CLIENTS: 'clients',
-  DOCUMENTS: 'documents',
-  PROFILE: 'profile'
-} as const;
-
-export const ERROR_MESSAGES = {
-  NETWORK: 'Network connection failed. Please check your internet connection.',
-  AUTH: 'Authentication failed. Please log in again.',
-  GENERIC: 'Something went wrong. Please try again.',
-  VALIDATION: 'Please check your input and try again.'
-} as const;

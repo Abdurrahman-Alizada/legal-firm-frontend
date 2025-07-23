@@ -6,7 +6,7 @@ import { useCaseStore } from "@/services/caseStore";
 import { useChatStore } from "@/services/chatStore";
 import { ChatMessage } from "@/types";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -55,7 +55,7 @@ const ChatScreen = () => {
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isCurrentUser = item.sender?._id === currentUserId || item.senderId == currentUserId;
+    const isCurrentUser = item.sender?._id === currentUserId;
     const isSystem = item.sender?.name === "system";
 
     return (
@@ -98,7 +98,7 @@ const ChatScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title={selectedCase?.title || "Chat"} />
+      <ScreenHeader title={selectedCase?.title || "Chat"} onBackPress={()=>router.dismiss(1)}/>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
