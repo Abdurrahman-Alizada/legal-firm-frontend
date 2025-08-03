@@ -28,7 +28,10 @@ const LegalPracticeScreen = () => {
           router.replace("/(admin)");
         } else if (res === "client") {
           router.replace("/(client)");
+        }else if(res ==="employee"){
+          router.replace("/(admin)");
         }
+
       }
       setLoading(false);
     });

@@ -1,7 +1,7 @@
-// hooks/useNotifications.ts
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 export function usePushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
@@ -32,6 +32,16 @@ export function usePushNotifications() {
     }
 
     registerForPushNotificationsAsync();
+
+    // Android channel
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
   }, []);
 
   return expoPushToken;

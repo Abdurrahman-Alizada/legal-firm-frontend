@@ -233,7 +233,7 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   searchContainer: {
     paddingTop: isIosDevice ? 0 : StatusBar.currentHeight,

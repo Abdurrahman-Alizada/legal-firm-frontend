@@ -104,7 +104,7 @@ const Companies = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   listContainer: {
     paddingVertical: spacing.sm,

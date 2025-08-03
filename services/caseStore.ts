@@ -8,16 +8,20 @@ export interface Case {
   clientId: string;
   companyId: string;
   clientName: string;
+  clientEmail:string;
   status: 'active' | 'pending' | 'closed';
   priority: 'low' | 'medium' | 'high';
   createdAt: string;
   updatedAt: string;
   description?: string;
   documents?: any[];
+  assignedEmployeeIds:string[];
+  assignedEmployees:any[];
 }
 
 interface CaseState {
   cases: Case[];
+  employees:any[];
   selectedCase: any;
   isLoading: boolean;
 }
@@ -25,17 +29,19 @@ interface CaseState {
 interface CaseActions {
   fetchCases: () => Promise<void>;
   fetchCaseById: (id: string) => Promise<void>;
-  createCase: (caseData: Omit<Case, '_id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  createCase: (caseData: Omit<Case, '_id' | 'clientName' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateCase: (id: string, updates: Partial<Case>) => Promise<void>;
   deleteCase: (id: string) => Promise<void>;
   uploadDocument: (id: string, documentData: any) => Promise<void>;
   selectCase: (case_: Case | null) => void;
+  getEmployees:()=>Promise<any>;
 }
 
 export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
   cases: [],
   selectedCase: null,
   isLoading: false,
+  employees:[],
 
   fetchCases: async () => {
     set({ isLoading: true });
@@ -70,7 +76,7 @@ export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
   createCase: async (caseData) => {
     set({ isLoading: true });
     try {
-      const {data}= await caseService.createCase({...caseData,clientId:"6876434d5fa9464f538655f5"});
+      const {data}= await caseService.createCase({...caseData});
       set(state => ({
         cases: [data, ...state.cases],
         isLoading: false
@@ -100,6 +106,7 @@ export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
         ),
         isLoading: false
       }));
+      set({selectedCase:data})
       Toast.show({
         type: 'success',
         text1: 'Case Updated',
@@ -138,7 +145,7 @@ export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
       set({ isLoading: false });
     }
   },
-
+  
   uploadDocument: async (id, documentData) => {
     set({ isLoading: true });
     try {
@@ -163,6 +170,9 @@ export const useCaseStore = create<CaseState & CaseActions>((set, get) => ({
       set({ isLoading: false });
     }
   },
-
+  getEmployees: async () => {
+    const {data} = await caseService.getEmployees();
+    set ({employees:data});
+  },
   selectCase: (case_) => set({ selectedCase: case_ }),
 }));

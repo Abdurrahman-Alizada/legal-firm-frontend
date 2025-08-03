@@ -2,7 +2,7 @@ import { TabHeader } from '@/components/ui/Headers';
 import { colors, fonts, layout, spacing } from '@/constants';
 import { useAuthStore } from '@/services/authStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Bell, ChevronRight, CreditCard as Edit, CircleHelp as HelpCircle, LogOut, Mail, User } from 'lucide-react-native';
+import { Bell, ChevronRight, CircleHelp as HelpCircle, LogOut, Mail, User } from 'lucide-react-native';
 import React from 'react';
 import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <TabHeader title='Profile' onRight={<TouchableOpacity style={styles.editButton}>
-          <Edit size={24} color={colors.primary} />
+          <View style={{height:24}} />
         </TouchableOpacity>}/>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -140,7 +140,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   editButton: {
     padding: spacing.sm,

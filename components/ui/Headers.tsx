@@ -78,7 +78,6 @@ const TabHeader: React.FC<TabHeaderProps> = ({
               placeholderTextColor={colors.text.secondary}
               style={styles.searchInput}
               onChangeText={setSearchText}
-              autoFocus={true}
             />
           </SafeAreaView>
         </Animated.View>

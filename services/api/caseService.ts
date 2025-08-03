@@ -11,7 +11,7 @@ export const caseService = {
       }
       return response.data;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw err;
     }
   },
@@ -21,17 +21,17 @@ export const caseService = {
       const response = await api.get(`/case/${id}`);
       return response.data;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw err;
     }
   },
 
-  async createCase(caseData: Omit<Case, '_id' | 'createdAt' | 'updatedAt'>) {
+  async createCase(caseData: Omit<Case, '_id' | 'clientName' | 'createdAt' | 'updatedAt'>) {
     try {
       const response = await api.post(`/case`, caseData);
       return response.data;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw err;
     }
   },
@@ -39,13 +39,9 @@ export const caseService = {
   async updateCase(id: string, updates: Partial<Case>) {
     try {
       const response = await api.patch(`/case/${id}`, updates);
-      if (response.status !== 200) {
-        const errorData = response.data;
-        throw new Error(errorData.message || 'Failed to update case');
-      }
       return response.data;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw err;
     }
   },
@@ -59,7 +55,7 @@ export const caseService = {
       }
       return response.data;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw err;
     }
   },
@@ -69,6 +65,15 @@ export const caseService = {
       const response = await api.post(`/case/${id}/documents`,formData , {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      return response.data;
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  async getEmployees() {
+    try {
+      const response = await api.get(`/company/invited-users`);
       return response.data;
     } catch (err) {
       console.error(err);

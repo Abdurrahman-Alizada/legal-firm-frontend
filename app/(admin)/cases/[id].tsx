@@ -1,3 +1,4 @@
+import EmployeeCard from "@/components/common/EmployeeCard";
 import AddCaseModal from "@/components/modals/AddCaseModal";
 import AddDocumentModal from "@/components/modals/AddDocumentModal";
 import { ScreenHeader } from "@/components/ui/Headers";
@@ -361,31 +362,15 @@ const CaseDetailPage = () => {
                 selectedCase.assignedEmployees.length > 0 && (
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Assigned To</Text>
-                    <View style={styles.assigneeCard}>
-                      <View style={styles.assigneeAvatar}>
-                        <User size={24} color={colors.text.primary} />
-                      </View>
-                      <View style={styles.assigneeInfo}>
-                        <Text style={styles.assigneeName}>
-                          {selectedCase.assignedEmployees?.name || "Unassigned"}
-                        </Text>
-                        <Text style={styles.assigneeRole}>
-                          {selectedCase.assignedEmployees?.length > 0
-                            ? "Case Manager"
-                            : "Case Creator"}
-                        </Text>
-                        <Text style={styles.assigneeEmail}>
-                          {selectedCase.assignedEmployees?.email || ""}
-                        </Text>
-                      </View>
-                      <TouchableOpacity style={styles.assigneeAction}>
-                        <Feather
-                          name="message-square"
-                          size={20}
-                          color={colors.primary}
+                    {
+                      selectedCase.assignedEmployees.map((emp:any)=>(
+                        <EmployeeCard
+                          key={emp._id}
+                          employee={emp}
+                          onPress={() => {}}
                         />
-                      </TouchableOpacity>
-                    </View>
+                      ))
+                    }
                   </View>
                 )}
             </View>

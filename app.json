@@ -27,6 +27,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-build-properties",
         {
@@ -36,7 +37,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.png",
+          "image": "./assets/images/icon.jpg",
           "imageWidth": 150,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

@@ -57,23 +57,6 @@ const AddDocumentModal = ({
       fadeAnim.setValue(0);
     }
   }, [visible]);
-
-  const handleDragEnter = () => setIsDragging(true);
-  const handleDragLeave = () => setIsDragging(false);
-
-  const handleDrop = async (result: any) => {
-    setIsDragging(false);
-    if (result.canceled || !result.assets) return;
-    
-    const asset = result.assets[0];
-    const newFile = {
-      uri: asset.uri,
-      name: asset.name || `File_${Date.now()}`,
-      type: asset.mimeType || "application/octet-stream",
-      size: asset.size || 0,
-    };
-    setSelectedFiles([newFile]);
-  };
   const pickDocument = async () => {
     try {
       const result: any = await DocumentPicker.getDocumentAsync({

@@ -2,6 +2,9 @@ import AddDocumentModal from "@/components/modals/AddDocumentModal";
 import { TabHeader } from "@/components/ui/Headers";
 import { FirmSkeleton, SummarySkeleton } from "@/components/ui/Skeletons";
 import { spacing } from "@/constants";
+import { usePushNotifications } from "@/hooks/useNotifications";
+import { sendExpoTokenToBackend } from "@/services/api/userService";
+import { useAuthStore } from "@/services/authStore";
 import { useCaseStore } from "@/services/caseStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
@@ -35,6 +38,13 @@ export default function DashboardTab() {
   const [showAddCaseModal, setShowAddCaseModal] = useState(false);
   const [caseSubject, setCaseSubject] = useState("");
   const [caseDescription, setCaseDescription] = useState("");
+  const expoPushToken = usePushNotifications();
+  const { user } = useAuthStore();
+  useEffect(() => {
+    if (user && expoPushToken) {
+      sendExpoTokenToBackend(expoPushToken);
+    }
+  }, [user,expoPushToken]);
 
   useEffect(() => {
     fetchCases();
@@ -165,14 +175,25 @@ export default function DashboardTab() {
     return (
       <SafeAreaView style={styles.container}>
         <TabHeader title="Client Portal" />
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
           {/* No Cases View */}
           <View style={styles.card}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: "#111827", marginBottom: 8 }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "700",
+                color: "#111827",
+                marginBottom: 8,
+              }}
+            >
               No Cases Found
             </Text>
             <Text style={{ fontSize: 14, color: "#6B7280", marginBottom: 16 }}>
-              You currently have no active cases. Please request to add a case to get started.
+              You currently have no active cases. Please request to add a case
+              to get started.
             </Text>
             <TouchableOpacity
               style={styles.payButton}
@@ -187,11 +208,18 @@ export default function DashboardTab() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.cardIconContainer}>
-                <Ionicons name="cloud-upload-outline" size={20} color="#6B7280" />
+                <Ionicons
+                  name="cloud-upload-outline"
+                  size={20}
+                  color="#6B7280"
+                />
               </View>
               <Text style={styles.cardTitle}>Document Upload</Text>
               <TouchableOpacity
-                style={[styles.selectFilesButton, { marginLeft: "auto", opacity: 0.5 }]}
+                style={[
+                  styles.selectFilesButton,
+                  { marginLeft: "auto", opacity: 0.5 },
+                ]}
                 onPress={handleNoCaseAlert}
                 disabled={true}
               >
@@ -220,7 +248,7 @@ export default function DashboardTab() {
           </View>
 
           {/* Julia Legal Assistant (always visible) */}
-          <View style={[styles.card, { marginBottom: 30 }]}> 
+          <View style={[styles.card, { marginBottom: 30 }]}>
             <View style={styles.cardHeader}>
               <View style={styles.cardIconContainer}>
                 <Ionicons name="library-outline" size={20} color="#6B7280" />
@@ -233,7 +261,8 @@ export default function DashboardTab() {
               </View>
               <View style={styles.assistantContent}>
                 <Text style={styles.assistantText}>
-                  Your AI-powered legal assistant. Get instant help or schedule a session.
+                  Your AI-powered legal assistant. Get instant help or schedule
+                  a session.
                 </Text>
                 <View style={styles.assistantActions}>
                   <TouchableOpacity
@@ -258,40 +287,97 @@ export default function DashboardTab() {
           transparent={true}
           onRequestClose={() => setShowAddCaseModal(false)}
         >
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
-            <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 24, width: '85%' }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 16 }}>Request a New Case</Text>
-              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>Subject</Text>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                padding: 24,
+                width: "85%",
+              }}
+            >
+              <Text
+                style={{ fontSize: 18, fontWeight: "700", marginBottom: 16 }}
+              >
+                Request a New Case
+              </Text>
+              <Text style={{ fontSize: 14, color: "#6B7280", marginBottom: 8 }}>
+                Subject
+              </Text>
               <TextInput
-                style={{ borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, padding: 10, marginBottom: 16, fontSize: 15 }}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  borderRadius: 8,
+                  padding: 10,
+                  marginBottom: 16,
+                  fontSize: 15,
+                }}
                 placeholder="Enter subject"
                 value={caseSubject}
                 onChangeText={setCaseSubject}
               />
-              <Text style={{ fontSize: 14, color: '#6B7280', marginBottom: 8 }}>Description</Text>
+              <Text style={{ fontSize: 14, color: "#6B7280", marginBottom: 8 }}>
+                Description
+              </Text>
               <TextInput
-                style={{ borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, padding: 10, marginBottom: 20, fontSize: 15, minHeight: 60, textAlignVertical: 'top' }}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  borderRadius: 8,
+                  padding: 10,
+                  marginBottom: 20,
+                  fontSize: 15,
+                  minHeight: 60,
+                  textAlignVertical: "top",
+                }}
                 placeholder="Enter description"
                 value={caseDescription}
                 onChangeText={setCaseDescription}
                 multiline
               />
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems:'center' }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                }}
+              >
                 <TouchableOpacity onPress={() => setShowAddCaseModal(false)}>
-                  <Text style={{ color: '#6B7280', fontSize: 15 }}>Cancel</Text>
+                  <Text style={{ color: "#6B7280", fontSize: 15 }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={{ backgroundColor: '#3B82F6', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 12 }}
+                  style={{
+                    backgroundColor: "#3B82F6",
+                    borderRadius: 8,
+                    paddingVertical: 10,
+                    paddingHorizontal: 18,
+                    marginLeft: 12,
+                  }}
                   onPress={() => {
                     // Here you would send the request to the backend
                     setShowAddCaseModal(false);
                     setCaseSubject("");
                     setCaseDescription("");
-                    Alert.alert('Request Sent', 'Your request to add a case has been sent. Our team will contact you soon.');
+                    Alert.alert(
+                      "Request Sent",
+                      "Your request to add a case has been sent. Our team will contact you soon."
+                    );
                   }}
                   disabled={!caseSubject.trim()}
                 >
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 15 }}>Submit</Text>
+                  <Text
+                    style={{ color: "#fff", fontWeight: "600", fontSize: 15 }}
+                  >
+                    Submit
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

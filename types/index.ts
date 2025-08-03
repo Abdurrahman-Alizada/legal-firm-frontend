@@ -73,17 +73,14 @@ export const clientRole: Role = {
   "_id": "6872d7051a3f220ffd342e00",
   "name": "Client"
 }
-
-export const invitationRoles = [
-  {
-    "_id": "6866e1acae6342167c9b35eb",
-    "name": "Paralegal"
-  },
-  {
-    "_id": "6866e1acae6342167c9b35ec",
-    "name": "Secretary"
-  }
-]
+export const SecretaryRole: Role = {
+  "_id": "6872d7061a3f220ffd342e03",
+      "name": "Secretary"
+}
+export const paralegalRole: Role = {
+  "_id": "6872d7051a3f220ffd342e02",
+      "name": "Paralegal"
+}
 
 export interface Role {
   _id: string;

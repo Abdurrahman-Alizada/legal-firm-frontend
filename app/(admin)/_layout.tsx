@@ -1,10 +1,21 @@
 import { HapticTab } from '@/components/ui/HapticTab';
 import { colors } from '@/constants';
+import { usePushNotifications } from '@/hooks/useNotifications';
+import { sendExpoTokenToBackend } from '@/services/api/userService';
+import { useAuthStore } from '@/services/authStore';
 import { Tabs } from 'expo-router';
 import { Briefcase, FileText, Home, MessageCircle, User, Users } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
+  const {user,isAuthenticated}=useAuthStore()
+  const expoPushToken=usePushNotifications()
+  useEffect(()=>{
+    if(user&&expoPushToken){
+      sendExpoTokenToBackend(expoPushToken)
+    }
+  },[user,expoPushToken])
   return (
     <Tabs
       screenOptions={{
@@ -49,6 +60,17 @@ export default function TabLayout() {
         name="clients" 
         options={{
           title: 'Clients',
+          href:null,
+          tabBarIcon: ({ size, color }) => (
+            <Users size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="employees"
+        options={{
+          title: 'Employees',
+          href:isAuthenticated==="admin"?undefined:null,
           tabBarIcon: ({ size, color }) => (
             <Users size={size} color={color} />
           ),

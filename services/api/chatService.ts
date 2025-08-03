@@ -37,7 +37,7 @@ export const chatService = {
       const response = await api.post(`/messages`, { threadId, content });
       return response.data
     } catch (error: any) {
-      console.log(error)
+      console.error(error)
       throw new Error(error.message || 'Failed to send message');
     }
   },

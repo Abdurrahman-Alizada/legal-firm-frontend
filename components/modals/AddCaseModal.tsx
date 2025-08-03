@@ -1,4 +1,6 @@
+import EmployeeCard from "@/components/common/EmployeeCard";
 import { colors, fonts, layout, spacing } from "@/constants";
+import { useAuthStore } from "@/services/authStore";
 import { Case, useCaseStore } from "@/services/caseStore";
 import React, { useEffect, useState } from "react";
 import {
@@ -9,7 +11,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,68 +19,85 @@ const AddCaseModal = ({
   visible,
   onClose,
   selectedCase,
-  setSelectedCase
+  setSelectedCase,
 }: {
   visible: boolean;
   onClose: () => void;
-  selectedCase?: Case | null;
-  setSelectedCase:any
+  selectedCase?: Case | null ;
+  setSelectedCase: any;
 }) => {
   const [newCase, setNewCase] = useState({
-          title: "",
-          clientName: "",
-          description: "",
-          status: "pending" as "pending" | "active" | "closed",
-          priority: "medium" as "low" | "medium" | "high",
-          clientId: "",
-          companyId: "",
-        });
-  const { isLoading, updateCase, createCase } = useCaseStore();
+    title: "",
+    clientEmail: "",
+    description: "",
+    status: "pending" as "pending" | "active" | "closed",
+    priority: "medium" as "low" | "medium" | "high",
+    companyId: "",
+    assignedEmployeeIds: [] as string[],
+  });
+  const { isLoading, updateCase, createCase, employees, getEmployees } =
+    useCaseStore();
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const { isAuthenticated} = useAuthStore();
+  useEffect(() => {
+    if (visible) {
+      setEmployeeLoading(true);
+      getEmployees()
+        .finally(() => setEmployeeLoading(false));
+    }
+  }, [visible]);
 
   useEffect(() => {
-    if(visible && selectedCase){
-        setNewCase({
-            title: selectedCase.title,
-            clientName: selectedCase.clientName,
-            description: selectedCase.description || "",
-            status: selectedCase.status,
-            priority: selectedCase.priority,
-            clientId: selectedCase.companyId,
-            companyId: selectedCase.companyId,
-          })
-    }else{
-        setNewCase({
-            title: "",
-            clientName: "",
-            description: "",
-            status: "pending",
-            priority: "medium",
-            clientId: "",
-            companyId: "",
-          })
+    if (visible && selectedCase) {
+      setNewCase({
+        title: selectedCase.title,
+        clientEmail: selectedCase.clientName,
+        description: selectedCase.description || "",
+        status: selectedCase.status,
+        priority: selectedCase.priority,
+        companyId: selectedCase.companyId,
+        assignedEmployeeIds: selectedCase.assignedEmployeeIds?selectedCase.assignedEmployeeIds:selectedCase.assignedEmployees?selectedCase.assignedEmployees.map(employee => employee._id):[],
+      });
+    } else {
+      setNewCase({
+        title: "",
+        clientEmail: "",
+        description: "",
+        status: "pending",
+        priority: "medium",
+        companyId: "",
+        assignedEmployeeIds: [],
+      });
     }
-  }, [visible,selectedCase])
-  
+  }, [visible, selectedCase]);
 
   const handleSubmit = async () => {
-    if (!newCase.title || !newCase.clientName) return;
+    if (!newCase.title) return;
     if (selectedCase) {
       await updateCase(selectedCase._id, newCase);
     } else {
-      await createCase(newCase);
+      await createCase(newCase as any);
     }
     setNewCase({
       title: "",
-      clientName: "",
+      clientEmail: "",
       description: "",
       status: "pending",
       priority: "medium",
-      clientId: "",
       companyId: "",
+      assignedEmployeeIds: [],
     });
-    setSelectedCase(null)
+    setSelectedCase(null);
     onClose();
   };
+
+  const handleEmployeeSelect = (employeeId: string) => {
+    setNewCase((prev) => ({
+      ...prev,
+      assignedEmployeeIds: [employeeId],
+    }));
+  };
+
   return (
     <Modal
       visible={visible}
@@ -86,35 +105,26 @@ const AddCaseModal = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.cancelText}>Cancel</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>
+          <Text style={styles.title}>
             {selectedCase ? "Edit Case" : "New Case"}
           </Text>
-          {isLoading ? (
-            <ActivityIndicator />
-          ) : (
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={!newCase.title || !newCase.clientName}
-            >
-              <Text
-                style={[
-                  styles.saveText,
-                  (!newCase.title || !newCase.clientName) &&
-                    styles.disabledText,
-                ]}
-              >
-                Save
-              </Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isLoading}
+            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          >
+            <Text style={styles.saveButtonText}>
+              {isLoading ? "Saving..." : "Save"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.modalContent}>
+        <ScrollView style={styles.modalContent} contentContainerStyle={{paddingBottom:spacing["3xl"]}}>
           <View style={styles.formGroup}>
             <Text style={styles.label}>Case Title *</Text>
             <TextInput
@@ -128,18 +138,18 @@ const AddCaseModal = ({
             />
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Client Name *</Text>
+         {!selectedCase && <View style={styles.formGroup}>
+            <Text style={styles.label}>Client Email *</Text>
             <TextInput
               style={styles.input}
-              value={newCase.clientName}
+              value={newCase.clientEmail}
               onChangeText={(text) =>
-                setNewCase((prev) => ({ ...prev, clientName: text }))
+                setNewCase((prev) => ({ ...prev, clientEmail: text }))
               }
-              placeholder="Enter client name"
+              placeholder="Enter client email"
               placeholderTextColor={colors.text.secondary}
             />
-          </View>
+          </View>}
 
           <View style={styles.formGroup}>
             <Text style={styles.label}>Description</Text>
@@ -152,66 +162,103 @@ const AddCaseModal = ({
               placeholder="Enter case description"
               placeholderTextColor={colors.text.secondary}
               multiline
-              numberOfLines={4}
+              numberOfLines={6}
             />
           </View>
 
-          <View style={styles.formRow}>
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>Status</Text>
-              <View style={styles.pickerContainer}>
-                {(["pending", "active", "closed"] as const).map((status) => (
+          {/* Employee Selection Section */}
+          {isAuthenticated==="admin" &&<View style={styles.formGroup}>
+            <Text style={[styles.label, { marginBottom: 12 }]}>
+              Assign Employee
+            </Text>
+            {employeeLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>Loading employees...</Text>
+              </View>
+            ) : employees.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No employees found.</Text>
+                <Text style={styles.emptySubtext}>
+                  Add employees to assign them to cases.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.employeeSelectionContainer}>
+                {employees.map((emp) => (
                   <TouchableOpacity
-                    key={status}
+                    key={emp._id}
                     style={[
-                      styles.pickerOption,
-                      newCase.status === status && styles.selectedPickerOption,
+                      styles.employeeSelectionCard,
+                      newCase.assignedEmployeeIds[0] === emp._id &&
+                        styles.selectedEmployeeCard,
                     ]}
-                    //@ts-ignore
-                    onPress={() => setNewCase((prev) => ({ ...prev, status }))}
+                    activeOpacity={0.8}
+                    onPress={() => handleEmployeeSelect(emp._id)}
                   >
-                    <Text
-                      style={[
-                        styles.pickerOptionText,
-                        newCase.status === status &&
-                          styles.selectedPickerOptionText,
-                      ]}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </Text>
+                    <EmployeeCard employee={emp} />
+                    {newCase.assignedEmployeeIds[0] === emp._id && (
+                      <View style={styles.selectionIndicator}>
+                        <Text style={styles.selectionIndicatorText}>✓ Selected</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
+            )}
+          </View>}
 
-            <View style={styles.formGroupHalf}>
-              <Text style={styles.label}>Priority</Text>
-              <View style={styles.pickerContainer}>
-                {(["low", "medium", "high"] as const).map((priority) => (
-                  <TouchableOpacity
-                    key={priority}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Status</Text>
+            <View style={styles.pickerContainer}>
+              {["pending", "active", "closed"].map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.pickerOption,
+                    newCase.status === status && styles.selectedPickerOption,
+                  ]}
+                  onPress={() =>
+                    setNewCase((prev) => ({ ...prev, status: status as any }))
+                  }
+                >
+                  <Text
                     style={[
-                      styles.pickerOption,
-                      newCase.priority === priority &&
-                        styles.selectedPickerOption,
+                      styles.pickerOptionText,
+                      newCase.status === status && styles.selectedPickerOptionText,
                     ]}
-                    //@ts-ignore
-                    onPress={() =>
-                      setNewCase((prev) => ({ ...prev, priority }))
-                    }
                   >
-                    <Text
-                      style={[
-                        styles.pickerOptionText,
-                        newCase.priority === priority &&
-                          styles.selectedPickerOptionText,
-                      ]}
-                    >
-                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Priority</Text>
+            <View style={styles.pickerContainer}>
+              {["low", "medium", "high"].map((priority) => (
+                <TouchableOpacity
+                  key={priority}
+                  style={[
+                    styles.pickerOption,
+                    newCase.priority === priority && styles.selectedPickerOption,
+                  ]}
+                  onPress={() =>
+                    setNewCase((prev) => ({ ...prev, priority: priority as any }))
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.pickerOptionText,
+                      newCase.priority === priority && styles.selectedPickerOptionText,
+                    ]}
+                  >
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </ScrollView>
@@ -223,86 +270,144 @@ const AddCaseModal = ({
 export default AddCaseModal;
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
-  modalHeader: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: spacing.lg,
-    backgroundColor: colors.background.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
   },
-  modalTitle: {
+  closeButton: {
+    padding: spacing.xs,
+  },
+  closeButtonText: {
+    fontSize: fonts.sizes.base,
+    color: colors.text.secondary,
+  },
+  title: {
     fontSize: fonts.sizes.lg,
     fontWeight: fonts.weights.semibold,
     color: colors.text.primary,
   },
-  cancelText: {
-    fontSize: fonts.sizes.base,
-    color: colors.text.secondary,
+  saveButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: layout.borderRadius.md,
   },
-  saveText: {
+  saveButtonDisabled: {
+    backgroundColor: colors.text.secondary,
+  },
+  saveButtonText: {
     fontSize: fonts.sizes.base,
-    color: colors.primary,
     fontWeight: fonts.weights.medium,
-  },
-  disabledText: {
-    opacity: 0.5,
+    color: colors.text.white,
   },
   modalContent: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md
   },
   formGroup: {
     marginBottom: spacing.lg,
-  },
-  formRow: {
-    gap: spacing.md,
-  },
-  formGroupHalf: {
-    flex: 1,
   },
   label: {
     fontSize: fonts.sizes.sm,
     fontWeight: fonts.weights.medium,
     color: colors.text.primary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.background.primary,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
     borderRadius: layout.borderRadius.md,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     fontSize: fonts.sizes.base,
     color: colors.text.primary,
-    borderWidth: 1,
-    borderColor: colors.border.light,
+    backgroundColor: colors.background.secondary,
   },
   textArea: {
     height: 100,
     textAlignVertical: "top",
   },
-  pickerContainer: {
-    flexDirection: "row",
-    backgroundColor: colors.background.primary,
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: spacing.lg,
+  },
+  loadingText: {
+    marginTop: spacing.sm,
+    fontSize: fonts.sizes.sm,
+    color: colors.text.secondary,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: spacing.lg,
+    backgroundColor: colors.background.secondary,
+    borderRadius: layout.borderRadius.md,
+  },
+  emptyText: {
+    fontSize: fonts.sizes.base,
+    fontWeight: fonts.weights.medium,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: fonts.sizes.sm,
+    color: colors.text.secondary,
+    textAlign: "center",
+  },
+  employeeSelectionContainer: {
+    gap: spacing.sm,
+  },
+  employeeSelectionCard: {
     borderRadius: layout.borderRadius.md,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.border.light,
+  },
+  selectedEmployeeCard: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  selectionIndicator: {
+    position: "absolute",
+    top: spacing.sm,
+    right: spacing.sm,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: layout.borderRadius.sm,
+  },
+  selectionIndicatorText: {
+    fontSize: fonts.sizes.xs,
+    fontWeight: fonts.weights.medium,
+    color: colors.text.white,
+  },
+  pickerContainer: {
+    flexDirection: "row",
+    gap: spacing.sm,
   },
   pickerOption: {
     flex: 1,
-    padding: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: layout.borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
     alignItems: "center",
   },
   selectedPickerOption: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   pickerOptionText: {
     fontSize: fonts.sizes.sm,
+    fontWeight: fonts.weights.medium,
     color: colors.text.primary,
   },
   selectedPickerOptionText: {

@@ -11,8 +11,8 @@ import { GeneratedDocument, useDocumentStore } from "@/services/documentStore";
 import { handleOpenDocument } from "@/utils/helper";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -110,18 +110,19 @@ const LegalDashboard = () => {
   const { fetchThreads } = useChatStore();
   const { cases, selectedCase, fetchCases, fetchCaseById } = useCaseStore();
   const { documents, getDocuments } = useDocumentStore();
-  const documentStore = useDocumentStore();
 
-  useEffect(() => {
-    setLoading(true);
-    fetchCases();
-    getRecentClients()
-      .then((res) => setRecentClients(res.data))
-      .catch((err) => {
-        Toast.show({ type: "error", text1: "Failed to load companies" });
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchCases();
+      getRecentClients()
+        .then((res) => setRecentClients(res.data))
+        .catch((err) => {
+          Toast.show({ type: "error", text1: "Failed to load companies" });
+        })
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
   const onMessagePress = async (id: string) => {
     setMessageLoading(id);
@@ -131,7 +132,6 @@ const LegalDashboard = () => {
         clientCompanyId: id,
         lawCompanyId: user?.companyId,
       });
-      console.log(res);
       await fetchThreads();
       router.push(`/chats/${res._id}`);
     } catch (err: any) {
@@ -212,31 +212,35 @@ const LegalDashboard = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickActionCard}
-            onPress={() => router.push("/clients")}
-          >
-            <Ionicons name="person-add" size={28} color="#1976D2" />
-            <Text style={styles.quickActionText}>Add Client</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionCard}
             onPress={() => setModalVisible(true)}
           >
             <Ionicons name="document-text" size={28} color="#1976D2" />
             <Text style={styles.quickActionText}>Generate Doc</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickActionCard}
-            onPress={() => router.push("/(screens)/subscriptions")}
-          >
-            <Ionicons name="card" size={28} color="#1976D2" />
-            <Text style={styles.quickActionText}>Manage Plan</Text>
-          </TouchableOpacity>
+          {isAuthenticated === "admin" && (
+            <>
+              <TouchableOpacity
+                style={styles.quickActionCard}
+                onPress={() => router.push("/employees")}
+              >
+                <Ionicons name="people" size={28} color="#1976D2" />
+                <Text style={styles.quickActionText}>Manage Team</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickActionCard}
+                onPress={() => router.push("/(screens)/subscriptions")}
+              >
+                <Ionicons name="card" size={28} color="#1976D2" />
+                <Text style={styles.quickActionText}>Manage Plan</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Current Plan Card */}
-        <View style={styles.planCardSection}>
+        {isAuthenticated==="admin" &&<View style={styles.planCardSection}>
           <PlanCard currentPlan={currentPlan} loading={loading} />
-        </View>
+        </View>}
 
         {/* Recent Documents */}
         {documents.length > 0 && (
@@ -255,25 +259,27 @@ const LegalDashboard = () => {
         )}
 
         {/* Recent Clients */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="people" size={20} color="#4A5568" />
-            <Text style={styles.sectionTitle}>Recent Clients</Text>
-            <TouchableOpacity onPress={() => router.push("/clients")}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
+        {recentClients.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="people" size={20} color="#4A5568" />
+              <Text style={styles.sectionTitle}>Recent Clients</Text>
+              <TouchableOpacity onPress={() => router.push("/clients")}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            {recentClients.map((item) => (
+              <CompanyCard
+                key={item._id}
+                id={item.companyId}
+                name={item.name}
+                type="Client"
+                onPress={onMessagePress}
+                loadingId={messageloading}
+              />
+            ))}
           </View>
-          {recentClients.map((item) => (
-            <CompanyCard
-              key={item._id}
-              id={item.companyId}
-              name={item.name}
-              type="Client"
-              onPress={onMessagePress}
-              loadingId={messageloading}
-            />
-          ))}
-        </View>
+        )}
 
         {/* Julia Legal Assistant */}
         <TouchableOpacity
@@ -435,7 +441,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     margin: 16,
-    gap: 12,
+    gap: 8,
   },
   quickActionCard: {
     backgroundColor: "#fff",
@@ -443,7 +449,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 20,
-    width: Dimensions.get("window").width / 2 - 26,
+    width: Dimensions.get("window").width / 2 - 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,

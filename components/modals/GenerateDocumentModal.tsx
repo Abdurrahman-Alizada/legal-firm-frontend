@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BriefcaseMedical, Handshake, Scale, UserPlus } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated, Easing, Modal,
   SafeAreaView,
   ScrollView,
@@ -147,6 +148,7 @@ const GenerateDocumentModal: React.FC<GenerateDocumentModalProps> = ({
   const [docType, setDocType] = useState<DocumentType | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [currentDateKey, setCurrentDateKey] = useState<string | null>(null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -200,7 +202,7 @@ const GenerateDocumentModal: React.FC<GenerateDocumentModalProps> = ({
       Toast.show({ type: "error", text1: "Please select a document type" });
       return;
     }
-    
+    setLoading(true)
       try {
         let apiRes;
         if (docType === "Settlement Agreement") {
@@ -215,14 +217,9 @@ const GenerateDocumentModal: React.FC<GenerateDocumentModalProps> = ({
         const pdfUrl = apiRes?.data?.url;
         if (pdfUrl) {
           documentStore.addDocument({
-            name:
-              fields.title ||
-              fields.name ||
-              docType +
-                " - " +
-                (selectedCase?.title || selectedCase?.clientName ||fields.name),
+            name:docType ,
             description:
-              fields.description || "Generated document for " + docType,
+              fields.description || "Generated document for " + (fields?.fullName||fields?.courtName||fields?.claimantName||fields?.patientName),
             url: pdfUrl,
             docType: docType!,
             caseName: selectedCase?.title || selectedCase?.clientName || "",
@@ -241,6 +238,7 @@ const GenerateDocumentModal: React.FC<GenerateDocumentModalProps> = ({
           text1: err.message || "Failed to generate document",
         });
       } finally {
+        setLoading(false);
         onClose();
         setFields({});
       }
@@ -269,9 +267,9 @@ const GenerateDocumentModal: React.FC<GenerateDocumentModalProps> = ({
               <Ionicons name="close" size={24} color={colors.text.secondary} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Generate Document</Text>
-            <TouchableOpacity onPress={handleSubmit} style={styles.iconButton}>
+            {loading?<ActivityIndicator size="small" color={colors.primary} />:<TouchableOpacity onPress={handleSubmit} style={styles.iconButton}>
               <Ionicons name="checkmark" size={24} color={colors.primary} />
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
           
           <ScrollView

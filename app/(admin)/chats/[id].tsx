@@ -4,9 +4,8 @@ import { colors, fonts, layout, spacing } from "@/constants";
 import { useAuthStore } from "@/services/authStore";
 import { useCaseStore } from "@/services/caseStore";
 import { useChatStore } from "@/services/chatStore";
-import { ChatMessage } from "@/types";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -30,9 +29,9 @@ const ChatScreen = () => {
   const flatListRef = useRef<FlatList>(null);
   const currentUserId = user?.id || "";
   const caseMessages = messages[threadId] || [];
-  const thread = threads.find((t) => t._id === threadId);
+  const thread:any = threads.find((t) => t._id === threadId);
   const selectedCase = thread
-    ? cases.find((item) => item._id === thread.caseId)
+    ? cases.find((item) => item._id === thread?.case?._id)
     : null;
 
   useEffect(() => {
@@ -54,7 +53,7 @@ const ChatScreen = () => {
     }
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
+  const renderMessage = ({ item }: { item: any }) => {
     const isCurrentUser = item.sender?._id === currentUserId || item.senderId == currentUserId;
     const isSystem = item.sender?.name === "system";
 
@@ -98,7 +97,7 @@ const ChatScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title={selectedCase?.title || "Chat"} />
+      <ScreenHeader onBackPress={()=>router.dismissTo('/chats')} title={selectedCase?.title || thread?.clientCompany?.name.replace("'s Firm","") || "chat"} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}

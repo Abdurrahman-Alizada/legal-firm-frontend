@@ -1,4 +1,4 @@
-import { adminRole, LoginCredentials, Role, SignUpCredentials } from "@/types";
+import { adminRole, clientRole, LoginCredentials, Role, SignUpCredentials } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Alert } from "react-native";
@@ -21,7 +21,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   currentPlan:any;
-  isAuthenticated: null | 'admin' | 'client';
+  isAuthenticated: null | 'admin' | 'client' |'employee';
 }
 
 interface AuthActions {
@@ -56,14 +56,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({
         user,
         token: accessToken,
-        isAuthenticated: user.role._id === adminRole._id ? 'admin' : 'client',
+        isAuthenticated: user.role._id === adminRole._id ? 'admin' : user.role._id === clientRole._id ?'client':'employee',
         isLoading: false,
         error: null,
       });
       if (user.role._id == adminRole._id) {
         router.dismissTo("/(admin)");
-      } else {
+      } else if (user.role._id == clientRole._id) {
         router.dismissTo("/(client)");
+      }else{
+        router.dismissTo("/(admin)");
       }
     } catch (error) {
       set({
@@ -115,7 +117,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     const token = await AsyncStorage.getItem("token");
     if (userStr && token) {
       const user = JSON.parse(userStr);
-      const isAuthenticated=user?user.role._id === adminRole._id ? 'admin' : 'client':null
+      const isAuthenticated=user?user.role._id === adminRole._id ? 'admin' : user.role._id === clientRole._id ?'client':'employee':null;
       set({
         user,
         token,

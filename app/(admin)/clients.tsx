@@ -46,11 +46,10 @@ export default function ClientsScreen() {
     setMessageLoading(id);
     try {
       const res = await chatService.createChatThread({
-        scope: "direct",
+        scope: "company",
         clientCompanyId: id,
         lawCompanyId: user?.companyId,
       });
-      console.log(res);
       await fetchThreads();
       router.push(`/chats/${res._id}`);
     } catch (err: any) {

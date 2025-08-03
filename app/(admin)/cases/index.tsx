@@ -21,10 +21,6 @@ export default function CasesScreen() {
     cases,
     isLoading,
     fetchCases,
-    createCase,
-    updateCase,
-    deleteCase,
-    uploadDocument,
   } = useCaseStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<
@@ -100,6 +96,7 @@ export default function CasesScreen() {
       </View>
       <ScrollView
         style={styles.content}
+        contentContainerStyle={{flexGrow:1}}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -142,8 +139,6 @@ export default function CasesScreen() {
         )}
       </ScrollView>
 
-      {/* Create/Edit Case Modal */}
-      <View style={{ flex: 1 }}>
         <AddCaseModal
           visible={showAddModal}
           onClose={() => {
@@ -153,7 +148,6 @@ export default function CasesScreen() {
           selectedCase={selectedCaseForEdit}
           setSelectedCase={setSelectedCaseForEdit}
         />
-      </View>
     </View>
   );
 }

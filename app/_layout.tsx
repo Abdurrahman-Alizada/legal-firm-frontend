@@ -28,6 +28,7 @@ export const STRIPE_PUBLISHABLE_KEY =
   "pk_test_51QQlCYKwNCwsnrlD6WNO2I7k85AxYRiP6n6NRQY5gwWf6C3SorZPhQmWxQEIVvodggQ2BqoYrgHgKorJnPaXxSBU006NZQMEbQ";
 export default function RootLayout() {
   useFrameworkReady();
+
   const [fontsLoaded, fontError] = useFonts({
     "Inter-Regular": Inter_400Regular,
     "Inter-Medium": Inter_500Medium,

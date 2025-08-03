@@ -3,7 +3,6 @@ import { SkeletonThread } from "@/components/ui/Skeletons";
 import { colors, fonts, layout, spacing } from "@/constants";
 import { useCaseStore } from "@/services/caseStore";
 import { useChatStore } from "@/services/chatStore";
-import { ChatThread } from "@/types";
 import { Feather, Octicons } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
 import { router } from "expo-router";
@@ -29,12 +28,8 @@ const ChatListScreen = () => {
     router.push(`/chats/${threadId}`);
   };
 
-  const getCaseTitle = (caseId: string) => {
-    const found = cases.find((c) => c._id === caseId);
-    return found ? found.title : caseId;
-  };
 
-  const renderThread = ({ item }: { item: ChatThread }) => (
+  const renderThread = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.threadItem}
       onPress={() => navigateToChat(item._id)}
@@ -54,10 +49,9 @@ const ChatListScreen = () => {
       </View>
       <View style={styles.threadContent}>
         <Text style={styles.threadTitle} numberOfLines={1}>
-          {getCaseTitle(item.caseId)}
+          {item.case?item?.case?.title:item?.lawCompany?.name}
         </Text>
         <Text style={styles.threadPreview} numberOfLines={1}>
-          Thread ID: {item._id}
         </Text>
       </View>
       <View style={styles.threadMeta}>
@@ -114,7 +108,7 @@ const ChatListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.background.primary,
   },
   centered: {
     flex: 1,
@@ -181,6 +175,8 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
+    flexGrow:1,
+    paddingTop:200,
     justifyContent: "center",
     alignItems: "center",
     padding: spacing.xl,
